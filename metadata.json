@@ -1,0 +1,5 @@
+{
+  "name": "ExposureEngine",
+  "description": "A data-driven visibility calculator for elite youth soccer players targeting college recruitment. Uses AI to analyze leagues, minutes, and academic data.",
+  "requestFramePermissions": []
+}
