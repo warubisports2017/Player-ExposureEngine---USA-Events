@@ -1,3 +1,4 @@
+
 import { YouthLeague, Position, CollegeLevel } from './types';
 
 export const LEAGUES: YouthLeague[] = [
@@ -212,7 +213,7 @@ Map your calculated values from the steps above to these fields:
      * Soccer Resume: D1=90, D2=80, NAIA=80, D3=70, JUCO=50
    
    - 'feedback': Short context string.
-     * For Academics: "Your GPA qualifies you for X% of US college programs."
+     * For Academics: "Your GPA qualifies you for X% of US college programs, though it may limit access to highly selective institutions." (Do NOT mention D1 specifically).
      * For Others: MANDATORY: If score >= 90, the feedback MUST explicitly state "suited for all divisions" or "well within all top collegiate benchmarks". Do NOT mention only D1.
      * Example Template for High Score: "Your physical profile is suited for all divisions, aligning with top collegiate athletic requirements." or "Playing a key role in MLS NEXT demonstrates an elite-level soccer resume, placing you well within all top collegiate benchmarks."
 

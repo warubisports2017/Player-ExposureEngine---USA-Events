@@ -8,8 +8,8 @@ import {
 import { 
   AlertTriangle, CheckCircle2, Calendar, ArrowRight, Shield, 
   Download, Printer, Share2, TrendingUp, Activity, Minus, 
-  AlertCircle, Info, Zap, User, Target, Globe, Trophy, Mail, X, Eye, DollarSign,
-  GraduationCap, Brain, Dumbbell, Video, BookOpen
+  AlertCircle, Info, Zap, User, Target, Globe, Trophy, Mail, X, Eye,
+  Brain, Dumbbell, Video, BookOpen
 } from 'lucide-react';
 
 interface Props {
@@ -165,18 +165,6 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     return { label: 'high', color: '#10b981', textClass: 'text-emerald-600 dark:text-emerald-500' };
   };
   
-  // Helper for Scholarship Context
-  const getScholarshipContext = (level: string) => {
-      switch(level) {
-          case 'D1': return { icon: DollarSign, text: 'Athletic + Academic', count: 3 };
-          case 'D2': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
-          case 'D3': return { icon: GraduationCap, text: 'Academic Aid ONLY', count: 1 };
-          case 'NAIA': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
-          case 'JUCO': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
-          default: return { icon: DollarSign, text: '', count: 1 };
-      }
-  };
-
   // Helper to format citizenship list
   const formatCitizenship = (p: PlayerProfile) => {
     if (!p.citizenship || !Array.isArray(p.citizenship)) return p.citizenship || "N/A";
@@ -499,28 +487,12 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                  {['D1', 'D2', 'D3', 'NAIA', 'JUCO'].map((lvl) => {
                     const score = visibilityScores.find(v => normalizeLevel(v.level) === lvl)?.visibilityPercent || 0;
                     const status = getProbabilityStatus(score);
-                    const scholarshipInfo = getScholarshipContext(lvl);
-                    const ScholarshipIcon = scholarshipInfo.icon;
 
                     return (
                        <div key={lvl} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/5 rounded p-2 text-center print:border-slate-300 relative group">
                           <div className="text-slate-900 dark:text-white font-bold text-xs mb-0.5">{lvl}</div>
                           <div className={`text-[10px] font-medium leading-tight mb-1 ${status.textClass}`}>
                              {status.label}
-                          </div>
-                          
-                          {/* Financial Hint */}
-                          <div className="flex justify-center mt-1">
-                             <div className="flex text-emerald-500/60 dark:text-emerald-400/60">
-                                {Array.from({ length: scholarshipInfo.count }).map((_, i) => (
-                                   <ScholarshipIcon key={i} className="w-2.5 h-2.5" />
-                                ))}
-                             </div>
-                          </div>
-                          
-                          {/* Tooltip for Scholarship */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-[9px] p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-center">
-                              {scholarshipInfo.text}
                           </div>
                        </div>
                     );
