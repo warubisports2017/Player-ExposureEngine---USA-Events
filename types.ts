@@ -13,7 +13,7 @@ export type YouthLeague =
 export type CollegeLevel = "D1" | "D2" | "D3" | "NAIA" | "JUCO";
 
 export type Position =
-  | "GK" | "CB" | "FB" | "WB" | "DM" | "CM" | "AM" | "WING" | "9" | "Utility";
+  | "GK" | "CB" | "LB" | "RB" | "CDM" | "CM" | "CAM" | "LW" | "RW" | "ST";
 
 export type ExperienceLevel = 
   | "Youth_Club_Only"
@@ -23,10 +23,13 @@ export type ExperienceLevel =
   | "International_Academy_U19"
   | "Pro_Academy_Reserve";
 
+export type VideoType = "None" | "Raw_Game_Footage" | "Edited_Highlight_Reel";
+
 export interface SeasonStat {
   year: number;
   teamName: string;
   league: YouthLeague[]; // Changed to array
+  otherLeagueName?: string; // Manual input for "Other" league
   minutesPlayedPercent: number; // Simplified from raw minutes for better UX
   mainRole: "Key_Starter" | "Rotation" | "Bench" | "Injured";
   goals: number;
@@ -60,7 +63,8 @@ export interface PlayerProfile {
   lastName: string;
   gender: "Male" | "Female";
   dateOfBirth: string; // YYYY-MM-DD for maturity calc
-  citizenship: string;
+  citizenship: string[]; // Changed to array for multiple nationalities
+  otherCitizenship?: string; // Manual input for "Other" citizenship
   experienceLevel: ExperienceLevel; // New field for maturity/adult play
   position: Position;
   secondaryPositions: Position[];
@@ -72,7 +76,7 @@ export interface PlayerProfile {
   academics: AcademicProfile;
   athleticProfile: AthleticProfile;
   events: ExposureEvent[];
-  videoLink: boolean;
+  videoType: VideoType; // Updated from boolean for better nuance
   coachesContacted: number;
   responsesReceived: number;
   offersReceived: number;
@@ -95,7 +99,7 @@ export interface ReadinessScore {
 }
 
 export interface RiskFlag {
-  category: "League" | "Minutes" | "Academics" | "Events" | "Location" | "Media" | "Communication";
+  category: "League" | "Minutes" | "Academics" | "Events" | "Location" | "Media" | "Communication" | "Verification";
   message: string;
   severity: "Low" | "Medium" | "High";
 }
@@ -116,8 +120,14 @@ export interface FunnelAnalysis {
 export interface BenchmarkMetric {
   category: string; // e.g. "Physical", "Soccer Resume", "Academics"
   userScore: number; // 0-100 scale
-  d1Average: number;
-  d3Average: number;
+  // Optional division benchmarks (for Physical/Resume)
+  d1Score?: number;
+  d2Score?: number;
+  d3Score?: number;
+  naiaScore?: number;
+  jucoScore?: number;
+  // Optional market access (for Academics only)
+  marketAccess?: number; // 0-100% of schools accessible
   feedback: string; // Short explanation
 }
 

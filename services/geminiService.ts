@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlayerProfile, AnalysisResult } from "../types";
 import { SYSTEM_PROMPT } from "../constants";
@@ -96,8 +97,12 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
           properties: {
             category: { type: Type.STRING },
             userScore: { type: Type.NUMBER },
-            d1Average: { type: Type.NUMBER },
-            d3Average: { type: Type.NUMBER },
+            d1Score: { type: Type.NUMBER },
+            d2Score: { type: Type.NUMBER },
+            d3Score: { type: Type.NUMBER },
+            naiaScore: { type: Type.NUMBER },
+            jucoScore: { type: Type.NUMBER },
+            marketAccess: { type: Type.NUMBER },
             feedback: { type: Type.STRING }
           }
         }

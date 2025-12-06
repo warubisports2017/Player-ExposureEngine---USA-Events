@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { PlayerProfile, SeasonStat, ExposureEvent, Position, YouthLeague } from '../types';
 import { LEAGUES, POSITIONS, ATHLETIC_RATINGS } from '../constants';
-import { Plus, Trash2, ChevronRight, Video, History, Zap, Check, ChevronsUpDown, Lightbulb, ChevronDown, User, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, Video, History, Zap, Check, ChevronsUpDown, Lightbulb, ChevronDown, User, GraduationCap, Info, Lock } from 'lucide-react';
 
 interface Props {
   onSubmit: (profile: PlayerProfile) => void;
@@ -13,18 +14,37 @@ const Label = ({ children }: { children?: React.ReactNode }) => (
   <label className="block text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1.5 font-mono">{children}</label>
 );
 
-// Helper for Section Headers
-const SectionHeader = ({ step, title, icon: Icon }: { step: string, title: string, icon: any }) => (
-  <div className="flex items-center mb-6 pb-4 border-b border-slate-200 dark:border-white/5">
-    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mr-3 font-mono text-sm font-bold">
-      {step}
+// Helper for Section Headers with Info Toggle
+const SectionHeader = ({ step, title, icon: Icon, infoText }: { step: string, title: string, icon: any, infoText: string }) => {
+  const [showInfo, setShowInfo] = useState(false);
+  
+  return (
+    <div className="mb-6">
+      <div className="flex items-center pb-4 border-b border-slate-200 dark:border-white/5">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mr-3 font-mono text-sm font-bold">
+          {step}
+        </div>
+        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center mr-auto">
+          {title}
+          <Icon className="w-4 h-4 ml-2 text-slate-400 dark:text-slate-500" />
+        </h3>
+        <button
+          type="button"
+          onClick={() => setShowInfo(!showInfo)}
+          className="text-slate-400 hover:text-emerald-500 transition-colors p-1"
+          title="How this affects your score"
+        >
+          <Info className="w-4 h-4" />
+        </button>
+      </div>
+      {showInfo && (
+        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-500/20 rounded-lg text-xs text-blue-800 dark:text-blue-200 leading-relaxed animate-fade-in">
+          <span className="font-bold mr-1">Engine Logic:</span> {infoText}
+        </div>
+      )}
     </div>
-    <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center">
-      {title}
-      <Icon className="w-4 h-4 ml-2 text-slate-400 dark:text-slate-500" />
-    </h3>
-  </div>
-);
+  );
+};
 
 const LeagueMultiSelect = ({ selected, onChange }: { selected: YouthLeague[], onChange: (leagues: YouthLeague[]) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,77 +105,141 @@ const LeagueMultiSelect = ({ selected, onChange }: { selected: YouthLeague[], on
   );
 };
 
-// DEMO DATA PRESETS (Kept same as provided)
+const COMMON_COUNTRIES = [
+    "USA", "Canada", "Mexico", "Germany", "United Kingdom", "France", "Spain", "Brazil", "Argentina", "Japan", "South Korea", "Australia", "Other"
+];
+
+const CountryMultiSelect = ({ selected, onChange }: { selected: string[], onChange: (countries: string[]) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleCountry = (country: string) => {
+    if (selected.includes(country)) {
+      onChange(selected.filter(c => c !== country));
+    } else {
+      onChange([...selected, country]);
+    }
+  };
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-lg p-2.5 text-sm text-left text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all hover:border-slate-400 dark:hover:border-slate-600 flex justify-between items-center group"
+      >
+        <span className="truncate block pr-6">
+          {selected.length > 0 
+            ? selected.join(', ') 
+            : <span className="text-slate-400 dark:text-slate-500">Select Country...</span>}
+        </span>
+        <ChevronsUpDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 absolute right-2.5" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+          {COMMON_COUNTRIES.map((country) => (
+            <div
+              key={country}
+              onClick={() => toggleCountry(country)}
+              className="flex items-center px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0"
+            >
+              <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 transition-colors ${selected.includes(country) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950'}`}>
+                {selected.includes(country) && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <span className={`text-sm ${selected.includes(country) ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+                {country}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// DEMO DATA PRESETS
 const DEMO_PROFILES: Record<string, Partial<PlayerProfile>> = {
   "Blue Chip D1 (MLS NEXT)": {
-    firstName: 'Alex', lastName: 'Romero', gender: 'Male', position: 'CM', gradYear: 2026,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
+    firstName: 'Alex', lastName: 'Romero', gender: 'Male', position: 'CM', gradYear: 2026, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
     academics: { graduationYear: 2026, gpa: 3.6, testScore: '1250 SAT' },
     athleticProfile: { speed: 'Elite', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2024, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, honors: 'All-American' }]
+    seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, honors: 'All-American' }]
   },
   "Solid Recruit (ECNL)": {
-    firstName: 'Liam', lastName: 'Smith', gender: 'Male', position: 'CB', gradYear: 2026,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
+    firstName: 'Liam', lastName: 'Smith', gender: 'Male', position: 'CB', gradYear: 2026, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.2, testScore: '1100 SAT' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2024, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, honors: '1st Team All-Conference' }]
+    seasons: [{ year: 2025, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, honors: '1st Team All-Conference' }]
   },
   "High Academic D3 (ECNL RL)": {
-    firstName: 'Emma', lastName: 'Davis', gender: 'Female', position: 'DM', gradYear: 2025,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
+    firstName: 'Emma', lastName: 'Davis', gender: 'Female', position: 'CDM', gradYear: 2025, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
     academics: { graduationYear: 2025, gpa: 4.0, testScore: '1450 SAT' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2024, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, honors: 'Scholar Athlete' }]
+    seasons: [{ year: 2025, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, honors: 'Scholar Athlete' }]
   },
   "D2/NAIA Target (NPL/USYS)": {
-    firstName: 'Carlos', lastName: 'Mendez', gender: 'Male', position: 'WING', gradYear: 2026,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
+    firstName: 'Carlos', lastName: 'Mendez', gender: 'Male', position: 'RW', gradYear: 2026, citizenship: ['USA', 'Mexico'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'Raw_Game_Footage', coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 2.8, testScore: '' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Above_Average', workRate: 'Above_Average', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2024, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, honors: 'Team MVP' }]
+    seasons: [{ year: 2025, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, honors: 'Team MVP' }]
   },
   "JUCO Route (Academic Risk)": {
-    firstName: 'Jayden', lastName: 'Williams', gender: 'Male', position: '9', gradYear: 2025,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
+    firstName: 'Jayden', lastName: 'Williams', gender: 'Male', position: 'ST', gradYear: 2025, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2025, gpa: 2.1, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Elite', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Above_Average' },
-    seasons: [{ year: 2024, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, honors: 'Top Scorer' }]
+    seasons: [{ year: 2025, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, honors: 'Top Scorer' }]
   },
   "High School Star (No Club)": {
-    firstName: 'Sarah', lastName: 'Johnson', gender: 'Female', position: 'AM', gradYear: 2026,
-    experienceLevel: 'High_School_Varsity', videoLink: true, coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    firstName: 'Sarah', lastName: 'Johnson', gender: 'Female', position: 'CAM', gradYear: 2026, citizenship: ['USA'],
+    experienceLevel: 'High_School_Varsity', videoType: 'Raw_Game_Footage', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '1200' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Average' },
-    seasons: [{ year: 2024, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, honors: 'State Player of Year' }]
+    seasons: [{ year: 2025, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, honors: 'State Player of Year' }]
   },
   "International / Semi-Pro": {
-    firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024,
-    experienceLevel: 'Semi_Pro_UPSL_NPSL_WPSL', videoLink: true, coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
+    firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024, citizenship: ['Other'], otherCitizenship: 'Croatia',
+    experienceLevel: 'Semi_Pro_UPSL_NPSL_WPSL', videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
     academics: { graduationYear: 2024, gpa: 3.0, testScore: 'TOEFL Passed' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Elite' },
-    seasons: [{ year: 2024, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, honors: 'League XI' }]
+    seasons: [{ year: 2025, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, honors: 'League XI' }]
   },
   "Bench Warmer (MLS NEXT)": {
-    firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027,
-    experienceLevel: 'Youth_Club_Only', videoLink: true, coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
+    firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2027, gpa: 3.3, testScore: '' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Average', tactical: 'Average' },
-    seasons: [{ year: 2024, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, honors: '' }]
   },
   "The Ghost (No Video)": {
-    firstName: 'Chris', lastName: 'Invisible', gender: 'Male', position: 'WB', gradYear: 2026,
-    experienceLevel: 'Youth_Club_Only', videoLink: false, coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    firstName: 'Chris', lastName: 'Invisible', gender: 'Male', position: 'RB', gradYear: 2026, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Average', endurance: 'Top_10_Percent', workRate: 'Elite', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2024, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, honors: '' }]
   },
   "Recreational / Beginner": {
-    firstName: 'Sam', lastName: 'Rookie', gender: 'Male', position: 'Utility', gradYear: 2028,
-    experienceLevel: 'Youth_Club_Only', videoLink: false, coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    firstName: 'Sam', lastName: 'Rookie', gender: 'Male', position: 'CM', gradYear: 2028, citizenship: ['USA'],
+    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2028, gpa: 3.0, testScore: '' },
     athleticProfile: { speed: 'Below_Average', strength: 'Below_Average', endurance: 'Average', workRate: 'Average', technical: 'Below_Average', tactical: 'Below_Average' },
-    seasons: [{ year: 2024, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, honors: '' }]
   }
 };
 
@@ -167,6 +251,11 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
   // Demo Dropdown State
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const demoRef = useRef<HTMLDivElement>(null);
+
+  // Info Button State (Ratings)
+  const [showRatingsInfo, setShowRatingsInfo] = useState(false);
+  // Info Button State (Offers)
+  const [showOffersInfo, setShowOffersInfo] = useState(false);
   
   // Tip Rotation State
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -179,6 +268,97 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
     "Personalized emails to coaches have a 5x higher response rate than generic blasts.",
     "There are over 1,200 colleges offering men's soccer, but only 205 are NCAA Division 1."
   ];
+
+  const US_REGIONS = [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California - North", "California - South",
+    "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", 
+    "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", 
+    "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", 
+    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", 
+    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", 
+    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", 
+    "International / Other"
+  ];
+
+  // Initial Empty State
+  const [profile, setProfile] = useState<PlayerProfile>({
+    firstName: '',
+    lastName: '',
+    gender: 'Male',
+    dateOfBirth: '',
+    citizenship: [],
+    experienceLevel: 'Youth_Club_Only',
+    position: 'CM',
+    secondaryPositions: [],
+    dominantFoot: 'Right',
+    height: '5\'10"',
+    gradYear: 2026,
+    state: '',
+    videoType: 'None',
+    coachesContacted: 0,
+    responsesReceived: 0,
+    offersReceived: 0,
+    academics: {
+      graduationYear: 2026,
+      gpa: 3.0,
+      testScore: ''
+    },
+    athleticProfile: {
+      speed: 'Average',
+      strength: 'Average',
+      endurance: 'Average',
+      workRate: 'Average',
+      technical: 'Average',
+      tactical: 'Average'
+    },
+    seasons: [
+      {
+        year: 2025,
+        teamName: '',
+        league: ['ECNL'],
+        minutesPlayedPercent: 80,
+        mainRole: 'Key_Starter',
+        goals: 0,
+        assists: 0,
+        honors: ''
+      }
+    ],
+    events: []
+  });
+
+  // Load from Local Storage on Mount
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('exposureEngine_profile');
+    if (savedProfile) {
+      try {
+        const parsed = JSON.parse(savedProfile);
+        // Migration support for old citizenship format (string -> string[])
+        if (typeof parsed.citizenship === 'string') {
+          parsed.citizenship = [parsed.citizenship];
+        }
+        setProfile(parsed);
+        // Re-calculate height ft/in for local state
+        if (parsed.height) {
+            const ft = parseInt(parsed.height.split("'")[0]) || 5;
+            const inch = parseInt(parsed.height.split("'")[1]) || 10;
+            setHeightFt(ft);
+            setHeightIn(inch);
+        }
+      } catch (e) {
+        console.error("Failed to load profile", e);
+      }
+    }
+  }, []);
+
+  // Save to Local Storage on Change
+  useEffect(() => {
+    // Debounce slightly to avoid rapid writes
+    const timer = setTimeout(() => {
+      localStorage.setItem('exposureEngine_profile', JSON.stringify(profile));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [profile]);
 
   // Rotate tips while loading
   useEffect(() => {
@@ -201,52 +381,6 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Initial Empty State
-  const [profile, setProfile] = useState<PlayerProfile>({
-    firstName: '',
-    lastName: '',
-    gender: 'Male',
-    dateOfBirth: '',
-    citizenship: '',
-    experienceLevel: 'Youth_Club_Only',
-    position: 'CM',
-    secondaryPositions: [],
-    dominantFoot: 'Right',
-    height: '5\'10"',
-    gradYear: 2026,
-    state: '',
-    videoLink: false,
-    coachesContacted: 0,
-    responsesReceived: 0,
-    offersReceived: 0,
-    academics: {
-      graduationYear: 2026,
-      gpa: 3.0,
-      testScore: ''
-    },
-    athleticProfile: {
-      speed: 'Average',
-      strength: 'Average',
-      endurance: 'Average',
-      workRate: 'Average',
-      technical: 'Average',
-      tactical: 'Average'
-    },
-    seasons: [
-      {
-        year: 2024,
-        teamName: '',
-        league: ['ECNL'],
-        minutesPlayedPercent: 80,
-        mainRole: 'Key_Starter',
-        goals: 0,
-        assists: 0,
-        honors: ''
-      }
-    ],
-    events: []
-  });
 
   // Update height string whenever ft/in changes
   useEffect(() => {
@@ -347,8 +481,9 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
     setProfile(prev => ({
       ...prev,
       ...demoData,
-      state: 'California',
-      citizenship: 'USA',
+      state: 'California - South',
+      // Ensure citizenship is array for demo data
+      citizenship: Array.isArray(demoData.citizenship) ? demoData.citizenship : ['USA'],
       dateOfBirth: '2007-06-15',
       secondaryPositions: [],
       events: [
@@ -403,8 +538,13 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
       </div>
 
       {/* SECTION 1: BASICS & ATHLETIC PROFILE */}
-      <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
-        <SectionHeader step="01" title="Player Bio & Physical" icon={User} />
+      <div className="relative z-40 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
+        <SectionHeader 
+          step="01" 
+          title="Player Bio & Physical" 
+          icon={User} 
+          infoText="Your physical profile (Height, Dominant Foot) and Maturity (Age/Experience) help determine your 'Physical Ceiling'."
+        />
         
         {/* Row 1: Names & Gender */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -490,14 +630,38 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
           </div>
           <div>
             <Label>State / Region</Label>
-            <input
-              type="text"
-              placeholder="e.g. SoCal, TX"
-              required
-              className={inputClass}
-              value={profile.state}
-              onChange={(e) => handleInputChange('state', e.target.value)}
-            />
+            <div className="relative">
+              <select
+                className={selectClass}
+                value={US_REGIONS.includes(profile.state) ? profile.state : (profile.state ? "International / Other" : "")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "International / Other") {
+                    handleInputChange('state', 'Other');
+                  } else {
+                    handleInputChange('state', val);
+                  }
+                }}
+              >
+                <option value="" disabled>Select State</option>
+                {US_REGIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+               <div className="absolute right-3 top-3 pointer-events-none text-slate-500">
+                <ChevronRight className="w-4 h-4 rotate-90" />
+              </div>
+            </div>
+             {(!US_REGIONS.includes(profile.state) && profile.state !== "") || profile.state === "International / Other" || profile.state === "Other" ? (
+               <div className="mt-2 animate-fade-in">
+                 <input
+                  type="text"
+                  placeholder="Enter State or Region"
+                  className={`${inputClass} border-emerald-500/30 focus:border-emerald-500`}
+                  value={profile.state === "International / Other" || profile.state === "Other" ? "" : profile.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  autoFocus
+                />
+               </div>
+            ) : null}
           </div>
         </div>
         
@@ -505,13 +669,23 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
            <div>
             <Label>Nationality / Citizenship</Label>
-            <input
-              type="text"
-              placeholder="e.g. USA, Germany"
-              className={inputClass}
-              value={profile.citizenship}
-              onChange={(e) => handleInputChange('citizenship', e.target.value)}
+            <CountryMultiSelect 
+              selected={profile.citizenship}
+              onChange={(c) => handleInputChange('citizenship', c)}
             />
+            {/* Show manual input if 'Other' is selected */}
+            {profile.citizenship.includes("Other") && (
+               <div className="mt-2 animate-fade-in">
+                 <input
+                  type="text"
+                  placeholder="Type Country (e.g. Dual Citizenship)"
+                  className={`${inputClass} border-emerald-500/30 focus:border-emerald-500`}
+                  value={profile.otherCitizenship || ""}
+                  onChange={(e) => handleInputChange('otherCitizenship', e.target.value)}
+                  autoFocus
+                />
+               </div>
+            )}
           </div>
           <div>
             <Label>Adult / International Experience</Label>
@@ -629,10 +803,26 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
 
         {/* Row 5: Athletic Standards */}
         <div className="border-t border-slate-200 dark:border-white/5 pt-6">
-           <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-4 flex items-center">
-              <Zap className="w-4 h-4 mr-2 text-emerald-500 dark:text-emerald-400" />
-              Player Ratings (vs. Teammates)
-           </h4>
+           <div className="flex items-center mb-1">
+               <h4 className="text-sm font-medium text-slate-900 dark:text-white flex items-center mr-2">
+                  <Zap className="w-4 h-4 mr-2 text-emerald-500 dark:text-emerald-400" />
+                  Player Ratings (vs. Teammates)
+               </h4>
+               <button 
+                 type="button" 
+                 onClick={() => setShowRatingsInfo(!showRatingsInfo)}
+                 className="text-slate-400 hover:text-emerald-500 transition-colors"
+               >
+                 <Info className="w-3.5 h-3.5" />
+               </button>
+           </div>
+           
+           {showRatingsInfo && (
+             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-500/20 rounded-lg text-xs text-blue-800 dark:text-blue-200 leading-relaxed animate-fade-in">
+               Be honest with your self-assessment. It is subjective, but honesty helps you get accurate answers.
+             </div>
+           )}
+
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { label: 'Speed (Accel / Top Speed)', key: 'speed' },
@@ -666,8 +856,13 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
       </div>
 
       {/* SECTION 2: ACADEMICS */}
-      <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
-        <SectionHeader step="02" title="Academic Standing" icon={GraduationCap} />
+      <div className="relative z-30 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
+        <SectionHeader 
+          step="02" 
+          title="Academic Standing" 
+          icon={GraduationCap} 
+          infoText="Your GPA acts as a 'Gatekeeper'. A GPA below 3.0 significantly reduces D3 visibility (no athletic scholarships) and removes high-academic D1s from your realistic list."
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label>GPA (Unweighted)</Label>
@@ -697,25 +892,22 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
       </div>
 
       {/* SECTION 3: SEASON HISTORY */}
-      <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-white/5">
-          <div className="flex items-center">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mr-3 font-mono text-sm font-bold">
-              03
-            </div>
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center">
-              Season History
-              <History className="w-4 h-4 ml-2 text-slate-400 dark:text-slate-500" />
-            </h3>
-          </div>
-          <button type="button" onClick={addSeason} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 flex items-center font-medium bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 transition-all hover:bg-emerald-200 dark:hover:bg-emerald-500/20">
+      <div className="relative z-20 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
+        <div className="flex justify-between items-center mb-6">
+          <SectionHeader 
+            step="03" 
+            title="Season History" 
+            icon={History} 
+            infoText="The engine calculates a 'League Coefficient' based on where you play and how much you play. **Pro Tip:** Entering at least your last 3 seasons provides the most accurate trend analysis."
+          />
+          <button type="button" onClick={addSeason} className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 flex items-center font-medium bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 transition-all hover:bg-emerald-200 dark:hover:bg-emerald-500/20 mb-6">
             <Plus className="w-3 h-3 mr-1" /> Add Season
           </button>
         </div>
         
         <div className="space-y-6">
           {profile.seasons.map((season, idx) => (
-            <div key={idx} className="p-5 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 relative group hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+            <div key={idx} className="p-5 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-white/5 relative group hover:border-slate-300 dark:hover:border-slate-600 transition-colors" style={{ zIndex: 20 - idx }}>
               {idx > 0 && (
                 <button
                   type="button"
@@ -741,6 +933,17 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                       selected={season.league}
                       onChange={(leagues) => updateSeason(idx, 'league', leagues)}
                     />
+                    {season.league.includes('Other') && (
+                      <div className="mt-2 animate-fade-in">
+                        <input
+                          type="text"
+                          placeholder="Specify League Name"
+                          className={`${inputClass} py-1.5 text-xs border-emerald-500/30 focus:border-emerald-500 bg-white dark:bg-slate-900`}
+                          value={season.otherLeagueName || ''}
+                          onChange={(e) => updateSeason(idx, 'otherLeagueName', e.target.value)}
+                        />
+                      </div>
+                    )}
                  </div>
                  <div>
                     <Label>Role</Label>
@@ -749,66 +952,86 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                       value={season.mainRole}
                       onChange={(e) => updateSeason(idx, 'mainRole', e.target.value)}
                     >
-                      <option value="Key_Starter">Key Starter</option>
-                      <option value="Rotation">Rotation</option>
-                      <option value="Bench">Bench</option>
-                      <option value="Injured">Injured</option>
+                      <option value="Key_Starter">Starter (Plays &gt;70% of match)</option>
+                      <option value="Rotation">Rotation (Plays 30-70% of match)</option>
+                      <option value="Bench">Reserve (Plays &lt;30% of match)</option>
+                      <option value="Injured">Injured / Did Not Play</option>
                     </select>
                  </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
                  <div>
-                    <Label>Minutes Played %</Label>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer"
-                        value={season.minutesPlayedPercent}
-                        onChange={(e) => updateSeason(idx, 'minutesPlayedPercent', parseInt(e.target.value))}
-                      />
-                      <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm w-12 text-right">{season.minutesPlayedPercent}%</span>
-                    </div>
+                    <Label>Team Name</Label>
+                    <input
+                      type="text"
+                      className={`${inputClass} py-1.5`}
+                      value={season.teamName}
+                      onChange={(e) => updateSeason(idx, 'teamName', e.target.value)}
+                    />
                  </div>
                  <div>
-                    <Label>Team & Honors</Label>
+                    <Label>Honors / Awards</Label>
                      <input
                       type="text"
-                      placeholder="Team Name / Awards"
                       className={`${inputClass} py-1.5`}
                       value={season.honors}
                       onChange={(e) => updateSeason(idx, 'honors', e.target.value)}
                     />
                  </div>
               </div>
+              <div>
+                <Label>Minutes Played %</Label>
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                    value={season.minutesPlayedPercent}
+                    onChange={(e) => updateSeason(idx, 'minutesPlayedPercent', parseInt(e.target.value))}
+                  />
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm w-12 text-right">{season.minutesPlayedPercent}%</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* SECTION 4: REALITY CHECK */}
-      <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
-        <SectionHeader step="04" title="Market Reality" icon={Video} />
+      {/* SECTION 4: MARKET REALITY */}
+      <div className="relative z-10 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-black/20">
+        <SectionHeader 
+          step="04" 
+          title="Market Reality" 
+          icon={Video} 
+          infoText="This calculates your 'Market Execution Score'. Even elite talent can be invisible without Video (0.6x penalty) or Outreach. High contact volume with low replies signals a 'Targeting Issue'."
+        />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-           {/* Video Toggle Card */}
-           <div className={`p-5 rounded-xl border transition-all duration-300 cursor-pointer ${profile.videoLink ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-500/50' : 'bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-500'}`}
-                onClick={() => handleInputChange('videoLink', !profile.videoLink)}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-slate-900 dark:text-white flex items-center">
-                  <Video className={`w-4 h-4 mr-2 ${profile.videoLink ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-500'}`} />
-                  Highlight Video
-                </span>
-                <div className={`w-10 h-5 rounded-full relative transition-colors ${profile.videoLink ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
-                  <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${profile.videoLink ? 'left-6' : 'left-1'}`} />
+           {/* Video Selection Card */}
+           <div className="space-y-3">
+              <Label>Video Availability</Label>
+              <div className="relative">
+                <select
+                  className={selectClass}
+                  value={profile.videoType}
+                  onChange={(e) => handleInputChange('videoType', e.target.value)}
+                >
+                  <option value="None">No Video</option>
+                  <option value="Raw_Game_Footage">Raw Game Footage (Unedited)</option>
+                  <option value="Edited_Highlight_Reel">Edited Highlight Reel</option>
+                </select>
+                <div className="absolute right-3 top-3 pointer-events-none text-slate-500">
+                  <ChevronRight className="w-4 h-4 rotate-90" />
                 </div>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                {profile.videoLink 
-                  ? "Great. Having accessible footage is the #1 requirement for remote recruiting." 
-                  : "WARNING: Without video, your visibility score will be severely penalized."}
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed pl-1">
+                {profile.videoType === 'None' 
+                  ? "WARNING: Without video, your visibility score will be severely penalized."
+                  : profile.videoType === 'Raw_Game_Footage'
+                  ? "Raw footage is better than nothing, but coaches prefer concise reels."
+                  : "Great. An edited reel is the industry standard for remote recruiting."}
               </p>
            </div>
            
@@ -832,10 +1055,26 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                 />
               </div>
               <div>
-                <Label>Concrete Offers</Label>
+                <div className="flex items-center justify-between mb-1.5">
+                   <Label><span className="text-emerald-600 dark:text-emerald-400 font-bold">Concrete Offers</span></Label>
+                   <button 
+                     type="button" 
+                     onClick={() => setShowOffersInfo(!showOffersInfo)}
+                     className="text-emerald-600/50 hover:text-emerald-500 dark:text-emerald-400/50 dark:hover:text-emerald-400 transition-colors"
+                   >
+                     <Info className="w-3 h-3" />
+                   </button>
+                </div>
+
+                {showOffersInfo && (
+                   <div className="mb-2 p-2 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-500/20 rounded text-[10px] text-emerald-800 dark:text-emerald-200 leading-snug animate-fade-in">
+                     An offer that is ready with concrete numbers and ready to commit and sign.
+                   </div>
+                )}
+
                 <input
                   type="number"
-                  className={`${inputClass} font-mono`}
+                  className={`${inputClass} font-mono border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-900/10 dark:border-emerald-500/30 focus:border-emerald-500`}
                   value={isNaN(profile.offersReceived) ? 0 : profile.offersReceived}
                   onChange={(e) => handleInputChange('offersReceived', parseInt(e.target.value))}
                 />
@@ -925,9 +1164,12 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
         </div>
         
         {!isLoading && (
-          <p className="text-center text-[10px] text-slate-500 mt-4 font-mono leading-tight max-w-md mx-auto">
-            Powered by Warubi Sports Analytics.
-          </p>
+          <div className="text-center mt-4">
+            <p className="flex items-center justify-center text-[10px] text-slate-400 dark:text-slate-500 font-mono leading-tight max-w-md mx-auto mb-1">
+              <Lock className="w-3 h-3 mr-1" />
+              Your data is stored securely and used to calculate your visibility score and help us identify future opportunities for you. We do not sell your data, and it is only used within Warubi Sports.
+            </p>
+          </div>
         )}
       </div>
     </form>

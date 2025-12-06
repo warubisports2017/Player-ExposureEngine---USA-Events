@@ -12,7 +12,7 @@ export const LEAGUES: YouthLeague[] = [
 ];
 
 export const POSITIONS: Position[] = [
-  "GK", "CB", "FB", "WB", "DM", "CM", "AM", "WING", "9", "Utility"
+  "GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LW", "RW", "ST"
 ];
 
 export const LEVELS: CollegeLevel[] = [
@@ -35,7 +35,7 @@ You receive one JSON object that contains:
 - academic data (unweightedGpa, test scores if present)
 - athletic self assessment (speed, strength, endurance, workRate, technical, tactical rated on Below Average, Average, Above Average, Top 10%, Elite)
 - soccer resume (list of seasons with league names, role, minutesPct, stats, honors)
-- market data (hasVideo boolean, coachesContacted, coachesResponded, offersReceived, camps or showcases attended)
+- market data (videoType, coachesContacted, coachesResponded, offersReceived, camps or showcases attended)
 
 Your job is to:
 1 - Estimate how visible and realistic each college level is for this player right now: NCAA D1, NCAA D2, NCAA D3, NAIA, JUCO.
@@ -46,6 +46,7 @@ Follow this simple scoring model exactly.
 
 A - Classify league tier
 - Look at the latest season and use the highest level league the player is currently in.
+- **Handling 'Other'**: If the league is 'Other', verify 'otherLeagueName' or 'teamName'. If it sounds like a top academy, treat as 'Mid'. If unknown, treat as 'Low'.
 
 For boys:
 - Elite boys - MLS NEXT, ECNL Boys
@@ -69,6 +70,8 @@ Use both self assessment and role plus minutes.
 - If there is a mix of Above Average and Top 10% with few Below Average - start as Medium.
 - If most are Average or Below Average - start as Low.
 
+**CRITICAL VERIFICATION**: If the League Tier is 'Low' OR 'Mid' AND the player rates themselves 'Elite' or 'Top 10%', you MUST flag a "Verification Risk". The context of "Elite" in a local league is not "Elite" nationally.
+
 2 - Adjust for role and minutes:
 - If role is Key Starter and minutesPct is at least 70 percent - move ability up by one band (cap at High).
 - If role is Bench or minutesPct is 30 percent or less - move ability down by one band (cap at Low).
@@ -80,41 +83,49 @@ Using unweightedGpa:
 
 - High academic - GPA >= 3.7
 - Solid academic - GPA 3.0 to 3.69
-- Risky - GPA 2.5 to 2.99
-- Problem - GPA < 2.5 or missing
+- Risky - GPA 2.3 to 2.99
+- Problem - GPA < 2.3 or missing
+
+**NCAA WARNING**: If GPA < 2.3, you MUST flag a "High" severity risk regarding "NCAA Eligibility Center Warning".
 
 D - Compute base scores by league tier and gender
 You will score each level on a 0 to 100 scale before market adjustments.
+**IMPORTANT**: These scores represent "Ability to make a roster", not just "Targeting Fit". An Elite player has high ability for lower levels too.
 
 For boys, base visibility:
-Elite boys (MLS NEXT, ECNL Boys): D1: 70, D2: 60, D3: 40, NAIA: 30, JUCO: 20
-High boys (ECNL RL, USYS NL, Elite 64): D1: 30, D2: 50, D3: 60, NAIA: 40, JUCO: 30
-Mid boys (NPL, regional): D1: 15, D2: 35, D3: 55, NAIA: 45, JUCO: 35
-Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 50
+Elite boys (MLS NEXT, ECNL Boys): D1: 75, D2: 85, D3: 60, NAIA: 85, JUCO: 95
+High boys (ECNL RL, USYS NL, Elite 64): D1: 35, D2: 60, D3: 65, NAIA: 70, JUCO: 80
+Mid boys (NPL, regional): D1: 15, D2: 35, D3: 60, NAIA: 55, JUCO: 65
+Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
 
 For girls, base visibility:
-Elite girls (ECNL, GA): D1: 80, D2: 65, D3: 45, NAIA: 30, JUCO: 20
-High girls (ECNL RL, USYS NL, Elite 64): D1: 35, D2: 55, D3: 60, NAIA: 40, JUCO: 30
-Mid girls (NPL, regional): D1: 15, D2: 35, D3: 60, NAIA: 45, JUCO: 35
-Low girls (local/HS): D1: 5, D2: 20, D3: 45, NAIA: 45, JUCO: 50
+Elite girls (ECNL, GA): D1: 80, D2: 90, D3: 65, NAIA: 85, JUCO: 95
+High girls (ECNL RL, USYS NL, Elite 64): D1: 40, D2: 65, D3: 70, NAIA: 75, JUCO: 85
+Mid girls (NPL, regional): D1: 15, D2: 35, D3: 65, NAIA: 55, JUCO: 65
+Low girls (local/HS): D1: 5, D2: 20, D3: 50, NAIA: 50, JUCO: 60
 
 E - Adjust scores for ability
 
-If ability band is High: D1: +15, D2: +10, D3: +5
-If ability band is Medium: No change.
-If ability band is Low: D1: -20, D2: -15, D3: -10, NAIA: -5, JUCO: 0
+**Cascading Competency Rule (CRITICAL)**:
+If a player is qualified for D1/D2, they are automatically qualified for NAIA/JUCO athletically.
+- If ability band is High: D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
+- If ability band is Medium: No change.
+- If ability band is Low: D1: -20, D2: -15, D3: -10, NAIA: -5, JUCO: 0
 
 F - Adjust scores for academics
+**Note on D3**: D3 is heavily academic. Even elite athletes drop significantly if GPA is low.
 
-High academic: D1: +5, D2: +5, D3: +10, NAIA: -5, JUCO: -10
+High academic: D1: +5, D2: +5, D3: +15, NAIA: +0, JUCO: -5
 Solid academic: D3: +5, JUCO: -5
-Risky: D1: -10, D2: -5, D3: -5, NAIA: +5, JUCO: +5
-Problem: D1: -25, D2: -20, D3: -15, NAIA: +10, JUCO: +20
+Risky: D1: -10, D2: -5, D3: -20 (Major D3 Penalty), NAIA: +5, JUCO: +5
+Problem: D1: -25, D2: -20, D3: -40 (Critical D3 Penalty), NAIA: +0, JUCO: +20
 
 G - Extra tweak for role and minutes
 
 - If role is Key Starter and minutesPct >= 80 percent: D1: +5, D2: +5
-- If role is Bench and minutesPct <= 20 percent: D1: -10, D2: -5, D3: -5
+- If role is Bench and minutesPct <= 20 percent:
+  - **Elite League Exception**: If League is 'Elite' (MLS NEXT/ECNL/GA), a 'Bench' role heavily penalizes D1 (-20) but ONLY slightly penalizes D2/D3 (-5). Reason: An MLS NEXT bench player is often a D2 starter.
+  - **All other leagues**: Bench role penalizes all levels (-10).
 
 G2 - Maturity & Experience Bonus (CRITICAL FACTOR)
 College coaches prefer players with adult-level experience (men's/women's leagues) or international experience due to physical and tactical maturity.
@@ -136,8 +147,9 @@ After all adjustments, clamp each level score between 0 and 100. Call this "on_p
 H - Apply video and outreach multipliers
 
 1 - Video multiplier:
-- If hasVideo is true: 1.0
-- If hasVideo is false: 0.6 (Massive penalty)
+- If videoType is "Edited_Highlight_Reel": 1.0 (Optimal)
+- If videoType is "Raw_Game_Footage": 0.8 (Good, but needs editing)
+- If videoType is "None": 0.6 (Massive penalty)
 
 2 - Outreach multiplier:
 - If coachesContacted == 0: tag "Invisible", multiplier 0.7
@@ -150,8 +162,9 @@ H - Apply video and outreach multipliers
 - clamp between 0 and 100
 
 I - Action Plan Logic
-- If hasVideo is false, the first item must be about creating a position appropriate highlight video.
-- If hasVideo is true but outreach is poor, the first item must be about fixing the video/subject lines.
+- If videoType is "None", the first item must be about creating a highlight video.
+- If videoType is "Raw_Game_Footage", the first item must be about editing that footage into a professional 3-5 minute reel.
+- If videoType is "Edited_Highlight_Reel" but outreach is poor, the first item must be about fixing targeting/subject lines.
 - Always align the plan with primary_level (highest visibility). Do not encourage them to chase a level where you gave them less than 15 percent visibility.
 
 **CONSTRAINT LOGIC (CRITICAL STEP):**
@@ -175,19 +188,34 @@ Map your calculated values from the steps above to these fields:
    - tactical: average of tactical self-ratings + bonus if experienceLevel is Semi-Pro/Pro
    - market: average of outreach/video health (0-100)
 3. 'funnelAnalysis':
-   - 'stage': determine based on coachesContacted/offers (Invisible, Outreach, Conversation, Closing)
+   - 'stage': determine based on coachesContacted/offers (Invisible, Outreach, Conversation, Evaluation, Closing)
    - 'conversionRate': "X% Reply Rate"
    - 'bottleneck': The main reason for low visibility (e.g. "No Video", "Spamming", "Low GPA")
    - 'advice': Short fix for the bottleneck.
 4. 'benchmarkAnalysis':
    - 'category': Create 3 entries: "Physical", "Soccer Resume", "Academics"
    - 'userScore': Calculate independent 0-100 scores for each category.
-     * "Physical": Map from Ability Band (High=90, Med=75, Low=60).
+     * "Physical": Map from Ability Band (High=92, Med=75, Low=60).
      * "Soccer Resume": Map from League Tier (Elite=95, High=80, Mid=65, Low=45).
-     * "Academics": Map from Academic Band (High=95, Solid=80, Risky=60, Problem=40).
-   - 'd1Average': Set manually (Physical: 90, Resume: 95, Academics: 85)
-   - 'd3Average': Set manually (Physical: 70, Resume: 70, Academics: 80)
-   - 'feedback': Short comparison string (e.g. "Your GPA is above D3 average but below D1.")
+     * "Academics": Map GPA to "Market Access Percentage" (University Access). 
+       * 4.0 GPA = 100%
+       * 3.5 GPA = 85%
+       * 3.0 GPA = 65%
+       * 2.5 GPA = 20% (Drastic drop for D3/Selective D1)
+       * <2.3 GPA = 0% (NCAA Ineligible)
+   
+   - 'marketAccess': (ONLY for "Academics" category) - This is the percentage calculated above.
+   
+   - 'd1Score', 'd2Score', 'd3Score', 'naiaScore', 'jucoScore': (ONLY for "Physical" and "Soccer Resume" categories).
+     * Set standard thresholds:
+     * Physical: D1=90, D2=80, NAIA=80, D3=70, JUCO=60
+     * Soccer Resume: D1=90, D2=80, NAIA=80, D3=70, JUCO=50
+   
+   - 'feedback': Short context string.
+     * For Academics: "Your GPA qualifies you for X% of US college programs."
+     * For Others: MANDATORY: If score >= 90, the feedback MUST explicitly state "suited for all divisions" or "well within all top collegiate benchmarks". Do NOT mention only D1.
+     * Example Template for High Score: "Your physical profile is suited for all divisions, aligning with top collegiate athletic requirements." or "Playing a key role in MLS NEXT demonstrates an elite-level soccer resume, placing you well within all top collegiate benchmarks."
+
 5. 'actionPlan': Create specific tasks based on your 90 day plan logic.
    - 'timeframe': "Next_30_Days" or "Next_90_Days"
    - 'impact': "High", "Medium", or "Low"

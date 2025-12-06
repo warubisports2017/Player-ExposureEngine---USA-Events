@@ -7,8 +7,9 @@ import {
 } from 'recharts';
 import { 
   AlertTriangle, CheckCircle2, Calendar, ArrowRight, Shield, 
-  Download, Mail, Printer, Share2, TrendingUp, Activity, Minus, 
-  AlertCircle, Info, Zap, User, Target, Globe, Trophy
+  Download, Printer, Share2, TrendingUp, Activity, Minus, 
+  AlertCircle, Info, Zap, User, Target, Globe, Trophy, Mail, X, Eye, DollarSign,
+  GraduationCap, Brain, Dumbbell, Video, BookOpen
 } from 'lucide-react';
 
 interface Props {
@@ -19,7 +20,7 @@ interface Props {
 }
 
 const PrintHeader = ({ profile }: { profile: PlayerProfile }) => (
-  <div className="hidden print:block border-b border-slate-200 mb-8 pb-6">
+  <div className="hidden print:block border-b border-slate-200 mb-8 pb-6 bg-white">
     <div className="flex justify-between items-center">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Exposure<span className="text-emerald-600">Engine</span> Report</h1>
@@ -36,13 +37,20 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => (
 
 const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark }) => {
   const [viewMode, setViewMode] = useState<'player' | 'coach'>('player');
+  
+  // Email Modal State
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [isEmailSending, setIsEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  // Info State for Radar Charts
+  const [showVisibilityInfo, setShowVisibilityInfo] = useState(false);
 
   // Defensive Coding: Ensure we have arrays even if API returns undefined
   const visibilityScores = result.visibilityScores || [];
   const keyRisks = result.keyRisks || [];
   const rawActionPlan = result.actionPlan || [];
-  const keyStrengths = result.keyStrengths || [];
   const funnelAnalysis = result.funnelAnalysis || {
     stage: 'Evaluation', conversionRate: '0%', bottleneck: 'Unknown', advice: 'Review data'
   };
@@ -57,7 +65,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     return level.replace(/NCAA\s*/i, '').trim();
   };
 
-  // Sort visibility scores safely
+  // Sort visibility scores safely for the chart data
   const sortedVisibility = [...visibilityScores].sort((a, b) => {
     const order: Record<string, number> = { 'D1': 5, 'D2': 4, 'D3': 3, 'NAIA': 2, 'JUCO': 1 };
     const scoreA = order[normalizeLevel(a.level)] || 0;
@@ -65,39 +73,65 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     return scoreB - scoreA;
   });
   
-  // No longer reversing. D1 (index 0) will be at the top in Recharts Vertical Layout.
-  const chartData = [...sortedVisibility];
-
-  // Calculate top realistic level for Coach View summary
-  const bestLevel = [...visibilityScores]
-    .sort((a, b) => b.visibilityPercent - a.visibilityPercent)[0];
+  // For Radar Chart: Visibility Profile
+  const radarData = [
+      { level: 'D1', fullMark: 100, visibilityPercent: visibilityScores.find(v => normalizeLevel(v.level) === 'D1')?.visibilityPercent || 0 },
+      { level: 'D2', fullMark: 100, visibilityPercent: visibilityScores.find(v => normalizeLevel(v.level) === 'D2')?.visibilityPercent || 0 },
+      { level: 'D3', fullMark: 100, visibilityPercent: visibilityScores.find(v => normalizeLevel(v.level) === 'D3')?.visibilityPercent || 0 },
+      { level: 'NAIA', fullMark: 100, visibilityPercent: visibilityScores.find(v => normalizeLevel(v.level) === 'NAIA')?.visibilityPercent || 0 },
+      { level: 'JUCO', fullMark: 100, visibilityPercent: visibilityScores.find(v => normalizeLevel(v.level) === 'JUCO')?.visibilityPercent || 0 },
+  ];
 
   // Logic to enforce Video Action Item presence
   const finalActionPlan = React.useMemo(() => {
     let plan = [...rawActionPlan];
+    
+    // 1. Handle Video Item (Critical - ALWAYS PREPEND)
+    // First, remove any generic video advice from the AI to avoid duplicates
     const videoKeywords = ['video', 'highlight', 'reel', 'film', 'footage'];
-    const videoIndex = plan.findIndex(item => 
-      videoKeywords.some(k => item.description.toLowerCase().includes(k))
+    plan = plan.filter(item => !videoKeywords.some(k => item.description.toLowerCase().includes(k)));
+
+    let videoAdvice = "";
+    if (profile.videoType === "None") {
+        videoAdvice = "URGENT: Create a highlight video. You cannot be recruited without one. Record your next 3 matches and produce a 3-5 minute reel immediately.";
+    } else if (profile.videoType === "Raw_Game_Footage") {
+        videoAdvice = "Optimize your footage. Coaches rarely watch full games. Edit your raw footage into a concise 3-5 minute highlight reel focusing on your best moments.";
+    } else {
+        videoAdvice = "Professionalize your reel. Even with a video, optimization is key. Ensure the first 30 seconds are your absolute best clips. Remove intro music/graphics. Update with recent play against high-level opposition.";
+    }
+
+    const videoActionItem: ActionItem = {
+      timeframe: 'Next_30_Days',
+      impact: 'High',
+      description: videoAdvice
+    };
+    
+    // Always add video advice as the first item
+    plan.unshift(videoActionItem);
+
+    // 2. Handle International/Maturity Suggestion (Subtle/Medium)
+    const maturityKeywords = ['international', 'abroad', 'adult league', 'men\'s league', 'upsl', 'npsl', 'semi-pro'];
+    const hasMaturityItem = plan.some(item => 
+      maturityKeywords.some(k => item.description.toLowerCase().includes(k))
     );
 
-    if (videoIndex === -1) {
-      // No video item found, inject one at the top
-      const newVideoItem: ActionItem = {
-        timeframe: 'Next_30_Days',
-        impact: 'High',
-        description: profile.videoLink 
-          ? "Optimize your highlight video. Coaches spend 30s avg on a reel. Ensure your first 4 clips are undeniable 'Elite' moments. Remove fluff and music intros."
-          : "URGENT: Create a highlight video. You cannot be recruited without one. Record your next 3 matches and produce a 3-5 minute reel immediately."
-      };
-      plan.unshift(newVideoItem);
-    } else if (videoIndex > 0) {
-      // Video item exists but isn't first, move to top to ensure priority
-      const [item] = plan.splice(videoIndex, 1);
-      plan.unshift(item);
+    const alreadyHasExperience = 
+        profile.experienceLevel === 'Semi_Pro_UPSL_NPSL_WPSL' || 
+        profile.experienceLevel === 'International_Academy_U19' || 
+        profile.experienceLevel === 'Pro_Academy_Reserve';
+
+    if (!hasMaturityItem && !alreadyHasExperience) {
+         const maturityItem: ActionItem = {
+            timeframe: 'Next_90_Days',
+            impact: 'Medium',
+            description: "Differentiation: Consider international training or adult leagues (UPSL/NPSL). Gaining experience outside the standard youth system signals maturity and college readiness to coaches."
+        };
+        // Insert as 3rd item (index 2) to be subtle but visible
+        plan.splice(2, 0, maturityItem);
     }
     
     return plan.slice(0, 5); // Ensure list doesn't get too long
-  }, [rawActionPlan, profile.videoLink]);
+  }, [rawActionPlan, profile.videoType, profile.experienceLevel]);
 
   // Helper for Impact Badges
   const getImpactBadge = (impact: string) => {
@@ -130,17 +164,89 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     if (score < 75) return { label: 'medium', color: '#eab308', textClass: 'text-yellow-600 dark:text-yellow-500' };
     return { label: 'high', color: '#10b981', textClass: 'text-emerald-600 dark:text-emerald-500' };
   };
+  
+  // Helper for Scholarship Context
+  const getScholarshipContext = (level: string) => {
+      switch(level) {
+          case 'D1': return { icon: DollarSign, text: 'Athletic + Academic', count: 3 };
+          case 'D2': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
+          case 'D3': return { icon: GraduationCap, text: 'Academic Aid ONLY', count: 1 };
+          case 'NAIA': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
+          case 'JUCO': return { icon: DollarSign, text: 'Athletic + Academic', count: 2 };
+          default: return { icon: DollarSign, text: '', count: 1 };
+      }
+  };
+
+  // Helper to format citizenship list
+  const formatCitizenship = (p: PlayerProfile) => {
+    if (!p.citizenship || !Array.isArray(p.citizenship)) return p.citizenship || "N/A";
+    const main = p.citizenship.filter(c => c !== 'Other');
+    if (p.citizenship.includes('Other') && p.otherCitizenship) {
+      main.push(p.otherCitizenship);
+    }
+    return main.length > 0 ? main.join(', ') : "N/A";
+  };
+
+  // Helper for Readiness Pillars Feedback
+  const getReadinessContext = (category: string, score: number) => {
+    let status = "";
+    let color = "";
+    let tip = "";
+
+    if (score >= 90) {
+      status = "Elite";
+      color = "text-emerald-500";
+      tip = "Ready for top-tier recruitment. Maintain and showcase.";
+    } else if (score >= 70) {
+      status = "Competitive";
+      color = "text-blue-500";
+      tip = "Solid foundation. Minor adjustments needed for elite levels.";
+    } else {
+      status = "Developing";
+      color = "text-amber-500";
+      tip = "Primary focus area. Significant room for growth.";
+    }
+
+    // Specific tips per category
+    if (category === "Exposure") {
+        if (score < 50) tip = "You are invisible. Priority #1: Film & Emails.";
+        else if (score < 85) tip = "Good start. Increase outreach volume to convert interest.";
+    }
+    if (category === "Academics") {
+        if (score < 70) tip = "Your GPA is limiting your options. Focus on grades to unlock D3/High D1.";
+    }
+
+    return { status, color, tip };
+  };
+
+  // Calculate Athletic Ceiling for Coach View
+  const getAthleticCeiling = (score: number) => {
+    if (score >= 90) return { label: "Elite (National)", color: "text-emerald-600 dark:text-emerald-400" };
+    if (score >= 80) return { label: "High (Regional)", color: "text-blue-600 dark:text-blue-400" };
+    if (score >= 70) return { label: "Standard", color: "text-yellow-600 dark:text-yellow-500" };
+    return { label: "Developmental", color: "text-slate-500 dark:text-slate-400" };
+  };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleEmailReport = () => {
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsEmailSending(true);
+    // Simulate API call
     setTimeout(() => {
-      setShowEmailModal(false);
-      alert(`Report sent to ${profile.firstName}'s email address.`);
-    }, 1000);
+        setIsEmailSending(false);
+        setEmailSent(true);
+        setTimeout(() => {
+            setShowEmailModal(false);
+            setEmailSent(false);
+            setEmail('');
+        }, 2500);
+    }, 1500);
   };
+
+  const athleticCeiling = getAthleticCeiling(readinessScore.athletic);
 
   return (
     <div className="w-full animate-fade-in print:p-0">
@@ -185,7 +291,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         /* COACH VIEW - Brutally Honest Dashboard */
         <div className="space-y-6">
            {/* PLAYER BIO STATS - SCOUTING DB STYLE */}
-           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 font-mono text-sm shadow-xl dark:shadow-none">
+           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 font-mono text-sm shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8">
                  <div>
                     <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Name</span>
@@ -201,7 +307,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                  </div>
                  <div>
                     <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Citizenship</span>
-                    <span className="text-slate-900 dark:text-white">{profile.citizenship || "N/A"}</span>
+                    <span className="text-slate-900 dark:text-white">{formatCitizenship(profile)}</span>
                  </div>
                  <div>
                     <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Height</span>
@@ -216,13 +322,13 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     <span className="text-slate-900 dark:text-white">{profile.academics.gpa}</span>
                  </div>
                  <div>
-                    <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Primary Level</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-bold">{bestLevel?.level || "N/A"}</span>
+                    <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Athletic Ceiling</span>
+                    <span className={`${athleticCeiling.color} font-bold`}>{athleticCeiling.label}</span>
                  </div>
               </div>
            </div>
 
-           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-xl dark:shadow-none">
+           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
               <h3 className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-widest mb-2 flex items-center">
                  <Shield className="w-4 h-4 mr-2" /> Internal Scouting Note
               </h3>
@@ -232,15 +338,15 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm print:shadow-none print:border-slate-300">
                  <h3 className="text-slate-900 dark:text-white font-bold mb-4">Recruiting Visibility</h3>
                  <div className="space-y-4">
                     {sortedVisibility.map((item) => (
                       <div key={item.level} className="flex items-center justify-between">
                          <span className="text-slate-500 dark:text-slate-400 font-mono text-sm w-12">{item.level}</span>
-                         <div className="flex-1 mx-4 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                         <div className="flex-1 mx-4 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden print:bg-slate-200">
                             <div 
-                              className={`h-full rounded-full ${item.visibilityPercent > 50 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                              className={`h-full rounded-full ${item.visibilityPercent > 50 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600 print:bg-slate-600'}`}
                               style={{ width: `${item.visibilityPercent}%` }}
                             ></div>
                          </div>
@@ -250,7 +356,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                  </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm print:shadow-none print:border-slate-300">
                  <h3 className="text-slate-900 dark:text-white font-bold mb-4">Key Constraints</h3>
                  <ul className="space-y-3">
                     {keyRisks.map((risk, i) => (
@@ -268,82 +374,122 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         <div className="space-y-6">
           
           {/* Executive Summary */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl">
+          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400" />
+              <Zap className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
               Executive Summary
             </h3>
-            <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed print:text-slate-800">
               {result.plainLanguageSummary}
             </p>
           </div>
 
-          {/* Section 1: Visibility Radar & Graph */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Radar Chart: Readiness */}
-            <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-                <Target className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400" />
-                Player Readiness
-              </h3>
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
-                    { subject: 'Athletic', A: readinessScore.athletic, fullMark: 100 },
-                    { subject: 'Technical', A: readinessScore.technical, fullMark: 100 },
-                    { subject: 'Market', A: readinessScore.market, fullMark: 100 },
-                    { subject: 'Academic', A: readinessScore.academic, fullMark: 100 },
-                    { subject: 'Tactical', A: readinessScore.tactical, fullMark: 100 },
-                  ]}>
-                    <PolarGrid stroke={isDark ? "#334155" : "#e2e8f0"} />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 10 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                    <Radar name="You" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-4 text-center leading-relaxed">
-                * Analysis based on self-reported ratings relative to current league level. Not independently verified.
-              </p>
-            </div>
+          {/* New Player Readiness Pillars */}
+          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center mb-6">
+                <Target className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
+                Player Readiness Pillars
+             </h3>
+             
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { label: "Physical", score: readinessScore.athletic, icon: Dumbbell },
+                  { label: "Technical", score: readinessScore.technical, icon: Activity },
+                  { label: "Tactical", score: readinessScore.tactical, icon: Brain },
+                  { label: "Exposure", score: readinessScore.market, icon: Video },
+                  { label: "Academics", score: readinessScore.academic, icon: BookOpen }
+                ].map((item, idx) => {
+                   const context = getReadinessContext(item.label, item.score);
+                   const Icon = item.icon;
+                   
+                   return (
+                     <div key={idx} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                        <div className="flex justify-between items-start mb-3">
+                           <div className="flex items-center space-x-2">
+                              <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
+                                <Icon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                              </div>
+                              <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{item.label}</span>
+                           </div>
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${
+                              item.score >= 90 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' :
+                              item.score >= 70 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
+                              'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+                           }`}>
+                              {context.status}
+                           </span>
+                        </div>
+                        
+                        <div className="mb-3">
+                           <div className="flex justify-between text-xs mb-1">
+                              <span className="text-slate-400">Readiness Score</span>
+                              <span className={`font-mono font-bold ${context.color}`}>{item.score}/100</span>
+                           </div>
+                           <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full transition-all duration-1000 ${
+                                   item.score >= 90 ? 'bg-emerald-500' : item.score >= 70 ? 'bg-blue-500' : 'bg-amber-500'
+                                }`} 
+                                style={{ width: `${item.score}%` }}
+                              ></div>
+                           </div>
+                        </div>
+                        
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug min-h-[2.5em]">
+                           {context.tip}
+                        </p>
+                     </div>
+                   );
+                })}
+             </div>
+          </div>
 
-            {/* Bar Chart: Recruiting Probabilities */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl flex flex-col justify-between">
+          {/* Radar Chart: Visibility Profile & Probability Grid */}
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl flex flex-col justify-between print:shadow-none print:border-slate-300 print:bg-white">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-                   <Trophy className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400" />
-                   Recruiting Probabilities
-                </h3>
+                <div className="flex justify-between items-start mb-6">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
+                       <Eye className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
+                       Visibility Profile
+                    </h3>
+                    <div className="relative">
+                        <button 
+                            onMouseEnter={() => setShowVisibilityInfo(true)}
+                            onMouseLeave={() => setShowVisibilityInfo(false)}
+                            className="text-slate-400 hover:text-emerald-500 transition-colors"
+                        >
+                            <Info className="w-4 h-4" />
+                        </button>
+                        {showVisibilityInfo && (
+                            <div className="absolute right-0 top-6 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl z-50 animate-fade-in border border-slate-700">
+                                <h4 className="font-bold mb-2">How to interpret your shape:</h4>
+                                <ul className="space-y-1.5 list-disc pl-3">
+                                  <li><strong>Full Web (Big Shape):</strong> You are a universal recruit with options at all levels.</li>
+                                  <li><strong>Dent in D3?</strong> Your athletic ability is high, but grades are limiting access.</li>
+                                  <li><strong>High NAIA/JUCO?</strong> If you are D1 qualified, you automatically qualify for these levels, providing a strong safety net.</li>
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                </div>
                 
-                <div className="h-[200px] w-full mb-4">
+                <div className="h-[300px] w-full mb-4">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#e2e8f0"} horizontal={false} />
-                      <XAxis type="number" domain={[0, 100]} hide />
-                      <YAxis 
-                        dataKey="level" 
-                        type="category" 
-                        width={60} 
-                        tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, fontSize: 12 }} 
-                        axisLine={false} 
-                        tickLine={false} 
-                      />
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                      <PolarGrid stroke={isDark ? "#334155" : "#e2e8f0"} />
+                      <PolarAngleAxis dataKey="level" tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 700 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                      <Radar name="Visibility" dataKey="visibilityPercent" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
                       <Tooltip 
-                        cursor={{fill: 'transparent'}}
                         contentStyle={{ 
                           backgroundColor: isDark ? '#0f172a' : '#ffffff', 
                           border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', 
-                          borderRadius: '8px',
+                          borderRadius: '8px', 
                           color: isDark ? '#f1f5f9' : '#0f172a'
                         }}
-                        itemStyle={{ color: isDark ? '#f1f5f9' : '#0f172a' }}
+                        itemStyle={{ color: '#3b82f6' }}
                       />
-                      <Bar dataKey="visibilityPercent" radius={[0, 4, 4, 0]} barSize={20}>
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getProbabilityStatus(entry.visibilityPercent).color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
+                    </RadarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -353,99 +499,122 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                  {['D1', 'D2', 'D3', 'NAIA', 'JUCO'].map((lvl) => {
                     const score = visibilityScores.find(v => normalizeLevel(v.level) === lvl)?.visibilityPercent || 0;
                     const status = getProbabilityStatus(score);
+                    const scholarshipInfo = getScholarshipContext(lvl);
+                    const ScholarshipIcon = scholarshipInfo.icon;
+
                     return (
-                       <div key={lvl} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/5 rounded p-2 text-center">
+                       <div key={lvl} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/5 rounded p-2 text-center print:border-slate-300 relative group">
                           <div className="text-slate-900 dark:text-white font-bold text-xs mb-0.5">{lvl}</div>
-                          <div className={`text-[10px] font-medium leading-tight ${status.textClass}`}>
+                          <div className={`text-[10px] font-medium leading-tight mb-1 ${status.textClass}`}>
                              {status.label}
+                          </div>
+                          
+                          {/* Financial Hint */}
+                          <div className="flex justify-center mt-1">
+                             <div className="flex text-emerald-500/60 dark:text-emerald-400/60">
+                                {Array.from({ length: scholarshipInfo.count }).map((_, i) => (
+                                   <ScholarshipIcon key={i} className="w-2.5 h-2.5" />
+                                ))}
+                             </div>
+                          </div>
+                          
+                          {/* Tooltip for Scholarship */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-slate-800 text-white text-[9px] p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-center">
+                              {scholarshipInfo.text}
                           </div>
                        </div>
                     );
                  })}
               </div>
             </div>
-          </div>
 
           {/* Section 2: Reality Check (Benchmark Analysis) */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-blue-500/20 shadow-lg dark:shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 opacity-50"></div>
+          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-blue-500/20 shadow-lg dark:shadow-xl relative overflow-hidden group print:shadow-none print:border-slate-300 print:bg-white">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 opacity-50 print:hidden"></div>
             
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
               <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Reality Check: You vs The Market</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Comparing your current profile against typical commits.</p>
               </div>
-              
-              {/* Custom Legend */}
-              <div className="flex space-x-6 mt-4 md:mt-0 text-[10px] font-mono uppercase tracking-wider justify-end">
-                <div className="flex items-center text-slate-600 dark:text-slate-300"><span className="w-3 h-3 bg-emerald-500 rounded-sm mr-2"></span>You</div>
-                <div className="flex items-center text-slate-600 dark:text-slate-300"><span className="w-8 h-0.5 border-t-2 border-dashed border-slate-400 dark:border-slate-200 mr-2"></span>D1 AVG</div>
-                <div className="flex items-center text-slate-600 dark:text-slate-300"><span className="w-8 h-0.5 border-t-2 border-dashed border-slate-900 dark:border-slate-600 mr-2"></span>D3 AVG</div>
-              </div>
             </div>
 
-            <div className="flex justify-around items-end h-[280px] w-full mb-8 px-2 md:px-12 pt-8 pb-2">
-               {benchmarkAnalysis.map((metric, idx) => (
-                  <div key={idx} className="flex flex-col items-center h-full w-1/3 max-w-[120px] group relative">
-                     {/* The Track */}
-                     <div className="relative w-full flex-1 bg-slate-100 dark:bg-slate-950 rounded-t-lg border-x border-t border-slate-200 dark:border-white/5 overflow-visible">
+            <div className="flex flex-wrap md:flex-nowrap justify-around items-end w-full mb-8 px-2 md:px-4 pt-4 pb-2 gap-4">
+               {benchmarkAnalysis.map((metric, idx) => {
+                  const isAcademic = metric.category === "Academics";
+                  
+                  const score = isAcademic && metric.marketAccess !== undefined ? metric.marketAccess : metric.userScore;
+
+                  // Unified Benchmarks Logic
+                  // For Academics, we show GPA equivalents for Market Access %
+                  // 100% = 4.0, 85% = 3.5, 65% = 3.0, 20% = 2.5
+                  const benchmarks = isAcademic ? [
+                      { label: '3.5+', val: 85, side: 'right' }, 
+                      { label: '3.0+', val: 65, side: 'right' },  
+                      { label: '2.5+', val: 20, side: 'right' },  
+                  ] : [
+                    { label: 'D1', val: metric.d1Score || 90, side: 'right' },
+                    { label: 'D2', val: metric.d2Score || 80, side: 'right' },
+                    { label: 'D3', val: metric.d3Score || 70, side: 'right' },
+                    { label: 'NAIA', val: metric.naiaScore || 80, side: 'left' },
+                    { label: 'JUCO', val: metric.jucoScore || 50, side: 'right' },
+                  ];
+
+                  return (
+                    <div key={idx} className="flex flex-col items-center w-full md:w-1/3 min-h-[300px]">
+                        {/* The Track */}
+                        <div className="relative w-20 flex-1 bg-slate-100 dark:bg-slate-950 rounded-t-lg border-x border-t border-slate-200 dark:border-white/5 overflow-visible print:bg-slate-50 print:border-slate-300 mx-auto">
+                            
+                            {/* User Bar */}
+                            <div 
+                                className={`absolute bottom-0 left-0 right-0 rounded-t-md transition-all duration-1000 ease-out mx-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] ${
+                                    isAcademic 
+                                    ? 'bg-gradient-to-t from-emerald-500 to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                                    : 'bg-gradient-to-t from-blue-600 to-blue-400'
+                                }`}
+                                style={{ height: `${score}%` }}
+                            >
+                                <div className={`absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-bold px-2 py-0.5 rounded border whitespace-nowrap ${
+                                    isAcademic
+                                    ? 'bg-slate-800 text-emerald-400 border-emerald-500/30'
+                                    : 'bg-slate-800 text-blue-400 border-blue-500/30'
+                                }`}>
+                                    {score}{isAcademic ? '% Access' : ''}
+                                </div>
+                            </div>
+
+                            {/* Benchmarks */}
+                            {benchmarks.map((b, i) => (
+                                <div 
+                                    key={i}
+                                    className="absolute w-full border-t border-dashed border-slate-400 dark:border-slate-600 left-0"
+                                    style={{ bottom: `${b.val}%` }}
+                                >
+                                    <span 
+                                      className={`absolute -top-2 text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold ${b.side === 'left' ? 'left-[-32px] text-right' : 'right-[-32px] text-left'}`}
+                                    >
+                                      {b.label}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                         
-                        {/* Grid lines (optional aesthetic) */}
-                        <div className="absolute inset-0 opacity-10 bg-[linear-gradient(0deg,transparent_24%,rgba(0,0,0,0.1)_25%,rgba(0,0,0,0.1)_26%,transparent_27%,transparent_74%,rgba(0,0,0,0.1)_75%,rgba(0,0,0,0.1)_76%,transparent_77%,transparent)] dark:bg-[linear-gradient(0deg,transparent_24%,rgba(255,255,255,0.3)_25%,rgba(255,255,255,0.3)_26%,transparent_27%,transparent_74%,rgba(255,255,255,0.3)_75%,rgba(255,255,255,0.3)_76%,transparent_77%,transparent)] bg-[length:100%_20px]"></div>
-
-                        {/* User Bar */}
-                        <div 
-                           className="absolute bottom-0 left-2 right-2 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-md transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
-                           style={{ height: `${metric.userScore}%` }}
-                        >
-                           {/* Score Tooltip/Label */}
-                           <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-emerald-400 text-xs font-bold px-2 py-1 rounded border border-emerald-500/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {metric.userScore}
-                           </div>
+                        <div className="mt-4 text-center">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block mb-2">{metric.category}</span>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight max-w-[220px] px-1 mx-auto min-h-[30px]">{metric.feedback}</p>
                         </div>
-
-                        {/* D3 Marker */}
-                        <div 
-                           className="absolute w-full border-t-2 border-dashed border-slate-900 dark:border-slate-600 left-0"
-                           style={{ bottom: `${metric.d3Average}%` }}
-                        >
-                           <span className="absolute right-0 -top-3 text-[9px] font-mono text-slate-900 dark:text-slate-500 font-bold bg-white/80 dark:bg-slate-900/80 px-1">D3</span>
-                        </div>
-
-                        {/* D1 Marker */}
-                        <div 
-                           className="absolute w-full border-t-2 border-dashed border-slate-400 dark:border-slate-200 left-0"
-                           style={{ bottom: `${metric.d1Average}%` }}
-                        >
-                           <span className="absolute right-0 -top-3 text-[9px] font-mono text-slate-500 dark:text-slate-200 font-bold bg-white/80 dark:bg-slate-900/80 px-1">D1</span>
-                        </div>
-                     </div>
-                     
-                     {/* Category Label */}
-                     <div className="mt-4 text-center">
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">{metric.category}</span>
-                     </div>
-                  </div>
-               ))}
-            </div>
-
-            {/* Insight Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               {benchmarkAnalysis.map((metric, idx) => (
-                  <div key={idx} className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-lg border border-slate-200 dark:border-white/5">
-                     <h4 className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-2">INSIGHT</h4>
-                     <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{metric.feedback}</p>
-                  </div>
-               ))}
+                    </div>
+                  );
+               })}
             </div>
           </div>
 
           {/* Section 3: The Funnel & Constraints */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              {/* Recruiting Funnel */}
-             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl">
+             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-                   <Share2 className="w-5 h-5 mr-2 text-purple-500 dark:text-purple-400" />
+                   <Share2 className="w-5 h-5 mr-2 text-purple-500 dark:text-purple-400 print:text-purple-600" />
                    Recruiting Funnel
                 </h3>
                 <div className="relative pt-4 pb-8 px-4">
@@ -469,16 +638,16 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                       <p className="text-slate-900 dark:text-white font-bold">{profile.offersReceived} Offers</p>
                    </div>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/20 p-4 rounded-lg">
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/20 p-4 rounded-lg print:border-purple-200 print:bg-purple-50">
                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase block mb-1">Funnel Diagnosis</span>
-                   <p className="text-sm text-purple-900 dark:text-purple-100">{funnelAnalysis.advice}</p>
+                   <p className="text-sm text-purple-900 dark:text-purple-100 print:text-purple-900">{funnelAnalysis.advice}</p>
                 </div>
              </div>
 
              {/* Constraints & Blockers */}
-             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl">
+             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-                   <AlertTriangle className="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400" />
+                   <AlertTriangle className="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400 print:text-amber-600" />
                    Performance Constraints
                 </h3>
                 <div className="space-y-4">
@@ -511,33 +680,30 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 4: 90 Day Game Plan */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl">
+          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white print:break-before-page">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center">
-              <Calendar className="w-6 h-6 mr-3 text-emerald-500 dark:text-emerald-400" />
+              <Calendar className="w-6 h-6 mr-3 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
               90 Day Game Plan
             </h3>
             <div className="space-y-4">
               {finalActionPlan.map((item, index) => {
                  // Determine if this is the Video Action Item by checking keywords
-                 // Logic updated to be content-aware rather than index-dependent
                  const videoKeywords = ['video', 'highlight', 'reel', 'film', 'footage'];
                  const isVideoAction = videoKeywords.some(k => item.description.toLowerCase().includes(k));
                  
-                 // Apply highlighting if it's a video action
                  const isCritical = isVideoAction; 
                  
-                 // Resolve Impact Badge styles
                  const impactConfig = getImpactBadge(item.impact);
                  const ImpactIcon = impactConfig.icon;
 
                  return (
                   <div key={index} className={`relative p-5 rounded-xl border flex flex-col sm:flex-row gap-4 sm:items-start transition-all ${
                      isCritical 
-                     ? 'border-blue-400/50 dark:border-blue-500/50 border-dashed bg-blue-50 dark:bg-blue-900/10 shadow-[0_0_20px_rgba(59,130,246,0.1)]' 
-                     : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 hover:border-slate-300 dark:hover:border-slate-700'
+                     ? 'border-blue-400/50 dark:border-blue-500/50 border-dashed bg-blue-50 dark:bg-blue-900/10 shadow-[0_0_20px_rgba(59,130,246,0.1)] print:border-blue-400 print:bg-blue-50' 
+                     : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 hover:border-slate-300 dark:hover:border-slate-700 print:border-slate-200 print:bg-white'
                   }`}>
                     {isCritical && (
-                       <div className="absolute -top-3 left-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg uppercase tracking-wider animate-pulse">
+                       <div className="absolute -top-3 left-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-lg uppercase tracking-wider animate-pulse print:animate-none print:shadow-none">
                           Critical Action Item
                        </div>
                     )}
@@ -552,7 +718,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     
                     {/* Content */}
                     <div className="flex-1">
-                      <p className={`text-sm md:text-base leading-relaxed ${isCritical ? 'text-blue-900 dark:text-blue-50 font-medium' : 'text-slate-700 dark:text-slate-200'}`}>
+                      <p className={`text-sm md:text-base leading-relaxed ${isCritical ? 'text-blue-900 dark:text-blue-50 font-medium print:text-blue-900' : 'text-slate-700 dark:text-slate-200 print:text-slate-800'}`}>
                         {item.description}
                       </p>
                     </div>
@@ -579,35 +745,108 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                <p className="text-sm text-slate-600 dark:text-slate-400">Download a PDF copy or email this analysis to yourself.</p>
             </div>
             <div className="flex space-x-4">
-               <button 
-                  onClick={handlePrint}
-                  className="flex items-center px-5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-lg border border-slate-300 dark:border-slate-600 transition-colors text-sm font-medium shadow-sm"
-               >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print / PDF
-               </button>
+               {/* Email Button */}
                <button 
                   onClick={() => setShowEmailModal(true)}
-                  className="flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-emerald-900/20"
+                  className="flex items-center px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors text-sm font-bold border border-slate-200 dark:border-slate-700 shadow-sm"
                >
-                  <Mail className="w-4 h-4 mr-2" />
+                  <Mail className="w-5 h-5 mr-2" />
                   Email Report
+               </button>
+
+               <button 
+                  onClick={handlePrint}
+                  className="flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors text-sm font-bold shadow-lg shadow-emerald-900/20"
+               >
+                  <Printer className="w-5 h-5 mr-2" />
+                  Print / Save PDF
                </button>
             </div>
          </div>
       </div>
 
-      {/* WARUBI PATHWAYS CTA */}
-      <div className="mt-12 mb-12 relative group cursor-pointer print:hidden">
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-6 relative animate-slide-up">
+                <button 
+                    onClick={() => setShowEmailModal(false)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Email Your Analysis</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                    Enter your email to receive a secure link to this report and your 90-day action plan.
+                </p>
+
+                {emailSent ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+                        <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-3">
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white">Sent!</h4>
+                        <p className="text-sm text-slate-500">Check your inbox shortly.</p>
+                    </div>
+                ) : (
+                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
+                            <input 
+                                type="email" 
+                                required
+                                placeholder="name@example.com"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        <button 
+                            type="submit"
+                            disabled={isEmailSending}
+                            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all flex items-center justify-center"
+                        >
+                            {isEmailSending ? (
+                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            ) : (
+                                "Send Report"
+                            )}
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>
+      )}
+
+      {/* MOBILE STICKY FOOTER CTA */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-emerald-500/20 md:hidden z-50 print:hidden animate-slide-up shadow-2xl">
+        <a 
+            href="https://warubisports.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center justify-between w-full px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl"
+        >
+            <div className="flex items-center">
+              <Globe className="w-4 h-4 mr-2 text-emerald-500" />
+              <span>Elite Pathways</span>
+            </div>
+            <div className="flex items-center text-emerald-500 dark:text-emerald-600">
+               Get Help <ArrowRight className="w-4 h-4 ml-1" />
+            </div>
+        </a>
+      </div>
+
+      {/* DESKTOP WARUBI PATHWAYS CTA */}
+      <div className="mt-12 mb-12 relative group cursor-pointer print:hidden hidden md:block">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
         <div className="relative bg-slate-900 border border-white/10 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden">
-            {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
             
             <div className="relative z-10 text-center md:text-left">
               <div className="inline-flex items-center space-x-2 text-emerald-400 mb-3">
                   <Globe className="w-4 h-4" />
-                  <span className="text-xs font-mono uppercase tracking-widest font-bold">International & Pro Level</span>
+                  <span className="text-xs font-mono uppercase tracking-widest font-bold">College, International, and Pro Level</span>
               </div>
               <h3 className="text-2xl font-bold text-white mb-3">Warubi Sports Elite Pathways</h3>
               <p className="text-slate-400 max-w-lg text-sm leading-relaxed">
@@ -627,36 +866,12 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         </div>
       </div>
 
-      {/* EMAIL MODAL */}
-      {showEmailModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 print:hidden">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl relative animate-slide-up">
-               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Email Full Report</h3>
-               <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Enter your email address to receive the full PDF analysis.</p>
-               
-               <input 
-                  type="email" 
-                  placeholder="player@example.com" 
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white mb-4 focus:border-emerald-500 focus:outline-none"
-               />
-               
-               <div className="flex justify-end space-x-3">
-                  <button 
-                     onClick={() => setShowEmailModal(false)}
-                     className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm"
-                  >
-                     Cancel
-                  </button>
-                  <button 
-                     onClick={handleEmailReport}
-                     className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium text-sm"
-                  >
-                     Send Report
-                  </button>
-               </div>
-            </div>
-         </div>
-      )}
+      {/* Beta Disclaimer */}
+      <div className="mt-8 pb-8 text-center print:hidden">
+        <p className="text-[10px] text-slate-400 dark:text-slate-600 max-w-md mx-auto leading-relaxed font-mono">
+          This tool is in beta, and we are continuing to refine the user experience and data validation. If you have suggestions that could make it better, your feedback is welcome via <a href="mailto:support@warubi-sports.com?subject=ExposureEngine%20-%20Feedback" className="text-emerald-500 hover:underline">support@warubi-sports.com</a>.
+        </p>
+      </div>
 
     </div>
   );
