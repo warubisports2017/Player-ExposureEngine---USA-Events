@@ -176,70 +176,70 @@ const DEMO_PROFILES: Record<string, Partial<PlayerProfile>> = {
     experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
     academics: { graduationYear: 2026, gpa: 3.6, testScore: '1250 SAT' },
     athleticProfile: { speed: 'Elite', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, honors: 'All-American' }]
+    seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, gamesPlayed: 28, honors: 'All-American' }]
   },
   "Solid Recruit (ECNL)": {
     firstName: 'Liam', lastName: 'Smith', gender: 'Male', position: 'CB', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.2, testScore: '1100 SAT' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, honors: '1st Team All-Conference' }]
+    seasons: [{ year: 2025, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, gamesPlayed: 24, honors: '1st Team All-Conference' }]
   },
   "High Academic D3 (ECNL RL)": {
     firstName: 'Emma', lastName: 'Davis', gender: 'Female', position: 'CDM', gradYear: 2025, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
     academics: { graduationYear: 2025, gpa: 4.0, testScore: '1450 SAT' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, honors: 'Scholar Athlete' }]
+    seasons: [{ year: 2025, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, gamesPlayed: 20, honors: 'Scholar Athlete' }]
   },
   "D2/NAIA Target (NPL/USYS)": {
     firstName: 'Carlos', lastName: 'Mendez', gender: 'Male', position: 'RW', gradYear: 2026, citizenship: ['USA', 'Mexico'],
     experienceLevel: 'Youth_Club_Only', videoType: 'Raw_Game_Footage', coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 2.8, testScore: '' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Above_Average', workRate: 'Above_Average', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, honors: 'Team MVP' }]
+    seasons: [{ year: 2025, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, gamesPlayed: 22, honors: 'Team MVP' }]
   },
   "JUCO Route (Academic Risk)": {
     firstName: 'Jayden', lastName: 'Williams', gender: 'Male', position: 'ST', gradYear: 2025, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2025, gpa: 2.1, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Elite', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Above_Average' },
-    seasons: [{ year: 2025, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, honors: 'Top Scorer' }]
+    seasons: [{ year: 2025, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, gamesPlayed: 25, honors: 'Top Scorer' }]
   },
   "High School Star (No Club)": {
     firstName: 'Sarah', lastName: 'Johnson', gender: 'Female', position: 'CAM', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: 'High_School_Varsity', videoType: 'Raw_Game_Footage', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '1200' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, honors: 'State Player of Year' }]
+    seasons: [{ year: 2025, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, gamesPlayed: 18, honors: 'State Player of Year' }]
   },
   "International / Semi-Pro": {
     firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024, citizenship: ['Other'], otherCitizenship: 'Croatia',
     experienceLevel: 'Semi_Pro_UPSL_NPSL_WPSL', videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
     academics: { graduationYear: 2024, gpa: 3.0, testScore: 'TOEFL Passed' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Elite' },
-    seasons: [{ year: 2025, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, honors: 'League XI' }]
+    seasons: [{ year: 2025, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, gamesPlayed: 30, honors: 'League XI' }]
   },
   "Bench Warmer (MLS NEXT)": {
     firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2027, gpa: 3.3, testScore: '' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, gamesPlayed: 3, cleanSheets: 0, honors: '' }]
   },
   "The Ghost (No Video)": {
     firstName: 'Chris', lastName: 'Invisible', gender: 'Male', position: 'RB', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Average', endurance: 'Top_10_Percent', workRate: 'Elite', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, gamesPlayed: 24, honors: '' }]
   },
   "Recreational / Beginner": {
     firstName: 'Sam', lastName: 'Rookie', gender: 'Male', position: 'CM', gradYear: 2028, citizenship: ['USA'],
     experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2028, gpa: 3.0, testScore: '' },
     athleticProfile: { speed: 'Below_Average', strength: 'Below_Average', endurance: 'Average', workRate: 'Average', technical: 'Below_Average', tactical: 'Below_Average' },
-    seasons: [{ year: 2025, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, gamesPlayed: 10, honors: '' }]
   }
 };
 
@@ -321,6 +321,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
         mainRole: 'Key_Starter',
         goals: 0,
         assists: 0,
+        gamesPlayed: 0,
+        cleanSheets: 0,
         honors: ''
       }
     ],
@@ -436,6 +438,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
           mainRole: 'Rotation',
           goals: 0,
           assists: 0,
+          gamesPlayed: 0,
           honors: ''
         }
       ]
@@ -979,6 +982,58 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                     />
                  </div>
               </div>
+              
+              {/* New Stats Grid Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <Label>Games Played</Label>
+                    <input
+                      type="number"
+                      min="0"
+                      className={`${inputClass} py-1.5 font-mono`}
+                      value={season.gamesPlayed || 0}
+                      onChange={(e) => updateSeason(idx, 'gamesPlayed', parseInt(e.target.value))}
+                    />
+                  </div>
+                  
+                  {/* Conditional GK Stats or Standard Stats */}
+                  {profile.position === 'GK' ? (
+                    <div>
+                      <Label>Clean Sheets</Label>
+                      <input
+                        type="number"
+                        min="0"
+                        className={`${inputClass} py-1.5 font-mono`}
+                        value={season.cleanSheets || 0}
+                        onChange={(e) => updateSeason(idx, 'cleanSheets', parseInt(e.target.value))}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <Label>Goals</Label>
+                        <input
+                          type="number"
+                          min="0"
+                          className={`${inputClass} py-1.5 font-mono`}
+                          value={season.goals || 0}
+                          onChange={(e) => updateSeason(idx, 'goals', parseInt(e.target.value))}
+                        />
+                      </div>
+                      <div>
+                        <Label>Assists</Label>
+                        <input
+                          type="number"
+                          min="0"
+                          className={`${inputClass} py-1.5 font-mono`}
+                          value={season.assists || 0}
+                          onChange={(e) => updateSeason(idx, 'assists', parseInt(e.target.value))}
+                        />
+                      </div>
+                    </>
+                  )}
+              </div>
+
               <div>
                 <Label>Minutes Played %</Label>
                 <div className="flex items-center space-x-4">

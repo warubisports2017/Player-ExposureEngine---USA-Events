@@ -32,8 +32,10 @@ export interface SeasonStat {
   otherLeagueName?: string; // Manual input for "Other" league
   minutesPlayedPercent: number; // Simplified from raw minutes for better UX
   mainRole: "Key_Starter" | "Rotation" | "Bench" | "Injured";
+  gamesPlayed: number;
   goals: number;
   assists: number;
+  cleanSheets?: number; // Optional, mainly for GK
   honors: string; // Comma separated
 }
 
