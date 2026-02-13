@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { AnalysisResult, RiskFlag, ActionItem, PlayerProfile, BenchmarkMetric } from '../types';
-import { 
+import { supabase } from '../services/supabase';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ReferenceLine, Legend
 } from 'recharts';
-import { 
-  AlertTriangle, CheckCircle2, Calendar, ArrowRight, Shield, 
-  Download, Printer, Share2, TrendingUp, Activity, Minus, 
+import {
+  AlertTriangle, CheckCircle2, Calendar, ArrowRight, Shield,
+  Download, Printer, Share2, TrendingUp, Activity, Minus,
   AlertCircle, Info, Zap, User, Target, Globe, Trophy, Mail, X, Eye,
   Brain, Dumbbell, Video, BookOpen
 } from 'lucide-react';
@@ -19,19 +20,31 @@ interface Props {
   isDark: boolean;
 }
 
-const PrintHeader = ({ profile }: { profile: PlayerProfile }) => (
-  <div className="hidden print:block border-b border-slate-200 mb-8 pb-6 bg-white">
-    <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Exposure<span className="text-emerald-600">Engine</span> Report</h1>
-        <p className="text-sm text-slate-500 mt-1">Generated via Warubi Sports Analytics</p>
-      </div>
-      <div className="text-right">
-        <h2 className="text-xl font-bold text-slate-800">{profile.firstName} {profile.lastName}</h2>
-        <p className="text-sm text-slate-500">Class of {profile.gradYear} • {profile.position}</p>
-        <p className="text-xs text-slate-400 mt-1">{new Date().toLocaleDateString()}</p>
+const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return (
+    <div className="hidden print:block mb-4 bg-white">
+      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 rounded-full mb-4"></div>
+      <div className="flex justify-between items-end pb-3 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 leading-tight">Exposure<span className="text-emerald-600">Engine</span></h1>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium mt-0.5">Scouting Report</p>
+        </div>
+        <div className="text-right">
+          <h2 className="text-lg font-bold text-slate-800">{profile.firstName} {profile.lastName}</h2>
+          <p className="text-[11px] text-slate-500">Class of {profile.gradYear} &bull; {profile.position}{profile.height ? ` &bull; ${profile.height}` : ''}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">{dateStr} &bull; <span className="text-red-500 font-semibold">Confidential</span></p>
+        </div>
       </div>
     </div>
+  );
+};
+
+const PrintFooter = () => (
+  <div className="hidden print:flex print-footer">
+    <span>ExposureEngine by Warubi Sports</span>
+    <span>Confidential</span>
   </div>
 );
 
@@ -219,19 +232,30 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     window.print();
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsEmailSending(true);
-    // Simulate API call
+    try {
+      await supabase.from('website_leads').upsert({
+        email: email,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        source: 'exposure-engine',
+        analysis_result: result,
+        visibility_scores: Object.fromEntries(
+          result.visibilityScores.map((v: any) => [v.level.toLowerCase(), v.visibilityPercent])
+        ),
+      }, { onConflict: 'email' });
+    } catch (err) {
+      console.error('Failed to save email lead', err);
+    }
+    setIsEmailSending(false);
+    setEmailSent(true);
     setTimeout(() => {
-        setIsEmailSending(false);
-        setEmailSent(true);
-        setTimeout(() => {
-            setShowEmailModal(false);
-            setEmailSent(false);
-            setEmail('');
-        }, 2500);
-    }, 1500);
+      setShowEmailModal(false);
+      setEmailSent(false);
+      setEmail('');
+    }, 2500);
   };
 
   const athleticCeiling = getAthleticCeiling(readinessScore.athletic);
@@ -239,6 +263,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
   return (
     <div className="w-full animate-fade-in print:p-0">
       <PrintHeader profile={profile} />
+      <PrintFooter />
 
       {/* VIEW TOGGLE SWITCH */}
       <div className="flex justify-between items-center mb-8 print:hidden">
@@ -379,7 +404,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                 Player Readiness Pillars
              </h3>
              
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-5 gap-4 print:gap-2">
                 {[
                   { label: "Physical", score: readinessScore.athletic, icon: Dumbbell },
                   { label: "Technical", score: readinessScore.technical, icon: Activity },
@@ -391,7 +416,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                    const Icon = item.icon;
                    
                    return (
-                     <div key={idx} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                     <div key={idx} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 print:p-2 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                         <div className="flex justify-between items-start mb-3">
                            <div className="flex items-center space-x-2">
                               <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
@@ -440,8 +465,8 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                        <Eye className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
                        Visibility Profile
                     </h3>
-                    <div className="relative">
-                        <button 
+                    <div className="relative print:hidden">
+                        <button
                             onMouseEnter={() => setShowVisibilityInfo(true)}
                             onMouseLeave={() => setShowVisibilityInfo(false)}
                             className="text-slate-400 hover:text-emerald-500 transition-colors"
@@ -461,7 +486,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     </div>
                 </div>
                 
-                <div className="h-[300px] w-full mb-4">
+                <div className="h-[300px] print:h-[180px] w-full mb-4 print:mb-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                       <PolarGrid stroke={isDark ? "#334155" : "#e2e8f0"} />
@@ -533,7 +558,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                   ];
 
                   return (
-                    <div key={idx} className="flex flex-col items-center w-full md:w-1/3 min-h-[300px]">
+                    <div key={idx} className="flex flex-col items-center w-full md:w-1/3 min-h-[300px] print:min-h-[180px]">
                         {/* The Track */}
                         <div className="relative w-20 flex-1 bg-slate-100 dark:bg-slate-950 rounded-t-lg border-x border-t border-slate-200 dark:border-white/5 overflow-visible print:bg-slate-50 print:border-slate-300 mx-auto">
                             
@@ -592,13 +617,13 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                 <div className="relative pt-4 pb-8 px-4">
                    <div className="absolute left-6 top-4 bottom-8 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
                    
-                   <div className="relative mb-8 pl-8">
+                   <div className="relative mb-8 print:mb-3 pl-8">
                       <div className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 ${funnelAnalysis.stage === 'Invisible' ? 'bg-red-500 border-red-500' : 'bg-white dark:bg-slate-900 border-slate-400 dark:border-slate-600'}`}></div>
                       <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Outreach</h4>
                       <p className="text-slate-900 dark:text-white font-bold">{profile.coachesContacted} Coaches Contacted</p>
                    </div>
 
-                   <div className="relative mb-8 pl-8">
+                   <div className="relative mb-8 print:mb-3 pl-8">
                       <div className={`absolute left-0 top-1 w-3 h-3 rounded-full border-2 ${funnelAnalysis.stage === 'Conversation' ? 'bg-amber-500 border-amber-500' : 'bg-white dark:bg-slate-900 border-slate-400 dark:border-slate-600'}`}></div>
                       <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Interest</h4>
                       <p className="text-slate-900 dark:text-white font-bold">{profile.responsesReceived} Replies ({funnelAnalysis.conversionRate})</p>
@@ -652,12 +677,12 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 4: 90 Day Game Plan */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white print:break-before-page">
+          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center">
               <Calendar className="w-6 h-6 mr-3 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
               90 Day Game Plan
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-4 print:space-y-2">
               {finalActionPlan.map((item, index) => {
                  // Determine if this is the Video Action Item by checking keywords
                  const videoKeywords = ['video', 'highlight', 'reel', 'film', 'footage'];
@@ -669,7 +694,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                  const ImpactIcon = impactConfig.icon;
 
                  return (
-                  <div key={index} className={`relative p-5 rounded-xl border flex flex-col sm:flex-row gap-4 sm:items-start transition-all ${
+                  <div key={index} className={`relative p-5 print:p-3 rounded-xl border flex flex-col sm:flex-row gap-4 print:gap-2 sm:items-start transition-all ${
                      isCritical 
                      ? 'border-blue-400/50 dark:border-blue-500/50 border-dashed bg-blue-50 dark:bg-blue-900/10 shadow-[0_0_20px_rgba(59,130,246,0.1)] print:border-blue-400 print:bg-blue-50' 
                      : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 hover:border-slate-300 dark:hover:border-slate-700 print:border-slate-200 print:bg-white'

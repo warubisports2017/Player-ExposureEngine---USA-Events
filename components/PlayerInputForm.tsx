@@ -285,6 +285,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
   const [profile, setProfile] = useState<PlayerProfile>({
     firstName: '',
     lastName: '',
+    email: '',
     gender: 'Male',
     dateOfBirth: '',
     citizenship: [],
@@ -549,8 +550,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
           infoText="Your physical profile (Height, Dominant Foot) and Maturity (Age/Experience) help determine your 'Physical Ceiling'."
         />
         
-        {/* Row 1: Names & Gender */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Row 1: Names, Email & Gender */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div>
             <Label>First Name</Label>
             <input
@@ -571,6 +572,16 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
               placeholder="e.g. Doe"
               value={profile.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <input
+              type="email"
+              className={inputClass}
+              placeholder="e.g. john@example.com"
+              value={profile.email || ''}
+              onChange={(e) => handleInputChange('email', e.target.value)}
             />
           </div>
           <div>

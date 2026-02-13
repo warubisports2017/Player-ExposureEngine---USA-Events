@@ -108,6 +108,103 @@
       .dark input[type=range]::-webkit-slider-runnable-track {
         background: #334155; /* Dark mode track */
       }
+
+      /* ─── PRINT STYLES ─── */
+      @media print {
+        @page {
+          size: A4;
+          margin: 0.6in 0.5in 0.9in 0.5in;
+        }
+
+        html, body {
+          font-size: 11px !important;
+          background: white !important;
+          color: #0f172a !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* Kill dark mode backgrounds */
+        .dark {
+          color-scheme: light !important;
+        }
+
+        /* Global spacing reduction */
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+          --tw-space-y-reverse: 0;
+          margin-top: 0.5rem !important;
+        }
+
+        /* Section card compaction */
+        .rounded-2xl {
+          padding: 0.6rem !important;
+          border-radius: 8px !important;
+        }
+
+        /* Typography tightening */
+        h3 {
+          font-size: 13px !important;
+          margin-bottom: 0.35rem !important;
+        }
+
+        p, span, li {
+          line-height: 1.4 !important;
+        }
+
+        .text-lg {
+          font-size: 13px !important;
+        }
+
+        .text-xl {
+          font-size: 14px !important;
+        }
+
+        /* Remove backdrop-filter (causes rendering artifacts) */
+        .backdrop-blur-sm, .backdrop-blur-md {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        /* SVG / Recharts overflow fix */
+        .recharts-wrapper, .recharts-surface {
+          overflow: visible !important;
+        }
+
+        /* Fixed footer on every page */
+        .print-footer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 0.3rem 0.5in;
+          font-size: 9px;
+          color: #94a3b8;
+          display: flex;
+          justify-content: space-between;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        /* Avoid breaking inside sections */
+        .rounded-2xl {
+          break-inside: avoid;
+        }
+
+        /* Reduce mb-6 gaps */
+        .mb-6 {
+          margin-bottom: 0.35rem !important;
+        }
+        .mb-8 {
+          margin-bottom: 0.4rem !important;
+        }
+
+        /* Compact grid gaps */
+        .gap-6 {
+          gap: 0.5rem !important;
+        }
+        .gap-4 {
+          gap: 0.35rem !important;
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -124,5 +221,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

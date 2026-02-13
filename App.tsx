@@ -5,6 +5,7 @@ import PlayerInputForm from './components/PlayerInputForm';
 import AnalysisResultView from './components/AnalysisResult';
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
+import { supabase } from './services/supabase';
 import { GraduationCap, Users, ShieldCheck, X } from 'lucide-react';
 
 const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
@@ -131,6 +132,42 @@ const App: React.FC = () => {
     try {
       const result = await analyzeExposure(submittedProfile);
       setAnalysisResult(result);
+
+      // Fire-and-forget save to Supabase
+      const leadData = {
+        email: submittedProfile.email || null,
+        first_name: submittedProfile.firstName,
+        last_name: submittedProfile.lastName,
+        source: 'exposure-engine',
+        gender: submittedProfile.gender,
+        date_of_birth: submittedProfile.dateOfBirth || null,
+        citizenship: submittedProfile.citizenship,
+        position: submittedProfile.position,
+        height: submittedProfile.height,
+        dominant_foot: submittedProfile.dominantFoot,
+        experience_level: submittedProfile.experienceLevel,
+        video_type: submittedProfile.videoType,
+        gpa: submittedProfile.academics.gpa,
+        test_score: submittedProfile.academics.testScore || null,
+        grad_year: String(submittedProfile.gradYear),
+        state_region: submittedProfile.state,
+        athletic_profile: submittedProfile.athleticProfile,
+        seasons: submittedProfile.seasons,
+        exposure_events: submittedProfile.events,
+        coaches_contacted: submittedProfile.coachesContacted,
+        responses_received: submittedProfile.responsesReceived,
+        offers_received: submittedProfile.offersReceived,
+        analysis_result: result,
+        visibility_scores: Object.fromEntries(
+          result.visibilityScores.map((v: any) => [v.level.toLowerCase(), v.visibilityPercent])
+        ),
+      };
+      if (leadData.email) {
+        supabase.from('website_leads').upsert(leadData, { onConflict: 'email' }).then(() => {});
+      } else {
+        supabase.from('website_leads').insert(leadData).then(() => {});
+      }
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error("Analysis Error Details:", err);

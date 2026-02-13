@@ -63,6 +63,7 @@ export interface AthleticProfile {
 export interface PlayerProfile {
   firstName: string;
   lastName: string;
+  email?: string;
   gender: "Male" | "Female";
   dateOfBirth: string; // YYYY-MM-DD for maturity calc
   citizenship: string[]; // Changed to array for multiple nationalities
