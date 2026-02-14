@@ -109,100 +109,260 @@
         background: #334155; /* Dark mode track */
       }
 
+      /* ─── SCREEN: hide print-only elements ─── */
+      @media screen {
+        .print-header { display: none !important; }
+        .print-footer { display: none !important; }
+      }
+
       /* ─── PRINT STYLES ─── */
       @media print {
         @page {
           size: A4;
-          margin: 0.6in 0.5in 0.9in 0.5in;
+          margin: 0.5in 0.5in 0.8in 0.5in;
         }
 
+        /* ── Base ── */
         html, body {
-          font-size: 11px !important;
+          font-size: 10.5px !important;
           background: white !important;
           color: #0f172a !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
 
-        /* Kill dark mode backgrounds */
-        .dark {
-          color-scheme: light !important;
+        * {
+          animation: none !important;
+          transition: none !important;
         }
 
-        /* Global spacing reduction */
-        .space-y-6 > :not([hidden]) ~ :not([hidden]) {
-          --tw-space-y-reverse: 0;
-          margin-top: 0.5rem !important;
+        /* ── Show print-only elements ── */
+        .print-header {
+          display: block !important;
         }
 
-        /* Section card compaction */
-        .rounded-2xl {
-          padding: 0.6rem !important;
-          border-radius: 8px !important;
-        }
-
-        /* Typography tightening */
-        h3 {
-          font-size: 13px !important;
-          margin-bottom: 0.35rem !important;
-        }
-
-        p, span, li {
-          line-height: 1.4 !important;
-        }
-
-        .text-lg {
-          font-size: 13px !important;
-        }
-
-        .text-xl {
-          font-size: 14px !important;
-        }
-
-        /* Remove backdrop-filter (causes rendering artifacts) */
-        .backdrop-blur-sm, .backdrop-blur-md {
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-        }
-
-        /* SVG / Recharts overflow fix */
-        .recharts-wrapper, .recharts-surface {
-          overflow: visible !important;
-        }
-
-        /* Fixed footer on every page */
         .print-footer {
+          display: flex !important;
           position: fixed;
           bottom: 0;
           left: 0;
           right: 0;
-          padding: 0.3rem 0.5in;
-          font-size: 9px;
+          padding: 0.25rem 0.5in;
+          font-size: 8px;
           color: #94a3b8;
-          display: flex;
           justify-content: space-between;
           border-top: 1px solid #e2e8f0;
+          background: white;
         }
 
-        /* Avoid breaking inside sections */
+        /* ── Hide non-print elements ── */
+        .no-print {
+          display: none !important;
+        }
+
+        /* ── Dark mode → Light mode ── */
+        .dark {
+          color-scheme: light !important;
+        }
+
+        /* Force white backgrounds on all dark sections */
+        [class*="dark:bg-slate-900"],
+        [class*="dark:bg-slate-950"],
+        [class*="bg-slate-900"],
+        [class*="bg-slate-950"],
+        [class*="bg-slate-800"] {
+          background: white !important;
+        }
+
+        [class*="dark:bg-slate-950/40"],
+        [class*="bg-slate-50"] {
+          background: #f8fafc !important;
+        }
+
+        /* Force dark text */
+        [class*="dark:text-white"] {
+          color: #0f172a !important;
+        }
+
+        [class*="dark:text-slate-2"],
+        [class*="dark:text-slate-3"] {
+          color: #334155 !important;
+        }
+
+        [class*="dark:text-slate-4"],
+        [class*="dark:text-slate-5"] {
+          color: #64748b !important;
+        }
+
+        /* Force visible borders */
+        [class*="dark:border-white/5"],
+        [class*="dark:border-white/10"],
+        [class*="dark:border-slate"] {
+          border-color: #cbd5e1 !important;
+        }
+
+        /* ── Remove visual effects ── */
+        [class*="shadow-"] {
+          box-shadow: none !important;
+        }
+
+        .backdrop-blur-sm, .backdrop-blur-md, [class*="backdrop-blur"] {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        /* ── Spacing reduction ── */
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.4rem !important;
+        }
+
+        .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.3rem !important;
+        }
+
+        .mb-6 { margin-bottom: 0.3rem !important; }
+        .mb-8 { margin-bottom: 0.35rem !important; }
+        .gap-6 { gap: 0.4rem !important; }
+        .gap-4 { gap: 0.3rem !important; }
+
+        /* ── Section card compaction ── */
         .rounded-2xl {
+          padding: 0.5rem !important;
+          border-radius: 6px !important;
           break-inside: avoid;
+          border-color: #cbd5e1 !important;
+          background: white !important;
         }
 
-        /* Reduce mb-6 gaps */
-        .mb-6 {
-          margin-bottom: 0.35rem !important;
+        /* ── Typography ── */
+        h3 {
+          font-size: 12px !important;
+          margin-bottom: 0.25rem !important;
         }
-        .mb-8 {
+
+        p, span, li {
+          line-height: 1.35 !important;
+        }
+
+        .text-lg { font-size: 12px !important; }
+        .text-xl { font-size: 13px !important; }
+        .text-2xl { font-size: 15px !important; }
+
+        /* ── Recharts ── */
+        .recharts-wrapper, .recharts-surface {
+          overflow: visible !important;
+        }
+
+        /* ── Readiness Pillars: force 5 columns ── */
+        .pillars-grid {
+          display: grid !important;
+          grid-template-columns: repeat(5, 1fr) !important;
+          gap: 0.25rem !important;
+        }
+
+        .pillar-card {
+          padding: 0.3rem !important;
+          border-radius: 6px !important;
+        }
+
+        .pillar-card .mb-3 {
+          margin-bottom: 0.15rem !important;
+        }
+
+        .pillar-card .min-h-\[2\.5em\] {
+          min-height: 0 !important;
+          font-size: 9px !important;
+        }
+
+        /* ── Radar chart: compact ── */
+        .radar-wrap {
+          height: 170px !important;
+          margin-bottom: 0.2rem !important;
+        }
+
+        /* ── Reality Check bars: force horizontal ── */
+        .reality-bars {
+          flex-wrap: nowrap !important;
+          gap: 0.4rem !important;
           margin-bottom: 0.4rem !important;
+          padding: 0.25rem !important;
         }
 
-        /* Compact grid gaps */
-        .gap-6 {
-          gap: 0.5rem !important;
+        .reality-bars > div {
+          min-height: 170px !important;
+          width: 33.33% !important;
         }
-        .gap-4 {
-          gap: 0.35rem !important;
+
+        /* ── Funnel + Constraints: force 2 columns ── */
+        .funnel-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 0.4rem !important;
+        }
+
+        /* Compact funnel timeline spacing */
+        .funnel-grid .mb-8 {
+          margin-bottom: 0.25rem !important;
+        }
+
+        .funnel-grid .pt-4 {
+          padding-top: 0.25rem !important;
+        }
+
+        .funnel-grid .pb-8 {
+          padding-bottom: 0.25rem !important;
+        }
+
+        /* ── Icons: force print-friendly colors ── */
+        [class*="text-emerald-400"],
+        [class*="text-emerald-500"] {
+          color: #059669 !important;
+        }
+
+        [class*="text-purple-400"] {
+          color: #7c3aed !important;
+        }
+
+        [class*="text-amber-400"] {
+          color: #d97706 !important;
+        }
+
+        /* ── Game plan compact ── */
+        .space-y-4 > div {
+          padding: 0.4rem !important;
+        }
+
+        /* ── Probability grid compact ── */
+        .grid-cols-5 {
+          gap: 0.2rem !important;
+        }
+
+        .grid-cols-5 > div {
+          padding: 0.15rem !important;
+        }
+
+        /* ── Fix absolute positioned score labels in Reality Check ── */
+        .reality-bars [class*="absolute"][class*="-top-7"] {
+          font-size: 8px !important;
+          padding: 0.1rem 0.3rem !important;
+        }
+
+        /* ── Colored severity cards in Constraints ── */
+        [class*="bg-red-50"],
+        [class*="bg-amber-50"],
+        [class*="bg-blue-50"] {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* ── Fix fixed-position elements leaking into print ── */
+        .fixed {
+          position: static !important;
+        }
+
+        /* But keep print-footer as fixed */
+        .print-footer {
+          position: fixed !important;
         }
       }
     </style>

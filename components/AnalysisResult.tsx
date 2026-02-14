@@ -24,7 +24,7 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <div className="hidden print:block mb-4 bg-white">
+    <div className="print-header mb-4 bg-white">
       <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 rounded-full mb-4"></div>
       <div className="flex justify-between items-end pb-3 border-b border-slate-200">
         <div>
@@ -33,8 +33,8 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-slate-800">{profile.firstName} {profile.lastName}</h2>
-          <p className="text-[11px] text-slate-500">Class of {profile.gradYear} &bull; {profile.position}{profile.height ? ` &bull; ${profile.height}` : ''}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">{dateStr} &bull; <span className="text-red-500 font-semibold">Confidential</span></p>
+          <p className="text-[11px] text-slate-500">Class of {profile.gradYear} • {profile.position}{profile.height ? ` • ${profile.height}` : ''}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">{dateStr} • <span className="text-red-500 font-semibold">Confidential</span></p>
         </div>
       </div>
     </div>
@@ -42,7 +42,7 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
 };
 
 const PrintFooter = () => (
-  <div className="hidden print:flex print-footer">
+  <div className="print-footer">
     <span>ExposureEngine by Warubi Sports</span>
     <span>Confidential</span>
   </div>
@@ -266,7 +266,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       <PrintFooter />
 
       {/* VIEW TOGGLE SWITCH */}
-      <div className="flex justify-between items-center mb-8 print:hidden">
+      <div className="no-print flex justify-between items-center mb-8">
         <button 
           onClick={onReset}
           className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center text-sm transition-colors"
@@ -404,7 +404,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                 Player Readiness Pillars
              </h3>
              
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-5 gap-4 print:gap-2">
+             <div className="pillars-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   { label: "Physical", score: readinessScore.athletic, icon: Dumbbell },
                   { label: "Technical", score: readinessScore.technical, icon: Activity },
@@ -416,7 +416,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                    const Icon = item.icon;
                    
                    return (
-                     <div key={idx} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 print:p-2 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                     <div key={idx} className="pillar-card bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                         <div className="flex justify-between items-start mb-3">
                            <div className="flex items-center space-x-2">
                               <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
@@ -465,7 +465,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                        <Eye className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
                        Visibility Profile
                     </h3>
-                    <div className="relative print:hidden">
+                    <div className="relative no-print">
                         <button
                             onMouseEnter={() => setShowVisibilityInfo(true)}
                             onMouseLeave={() => setShowVisibilityInfo(false)}
@@ -486,7 +486,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     </div>
                 </div>
                 
-                <div className="h-[300px] print:h-[180px] w-full mb-4 print:mb-1">
+                <div className="radar-wrap h-[300px] w-full mb-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                       <PolarGrid stroke={isDark ? "#334155" : "#e2e8f0"} />
@@ -527,7 +527,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
           {/* Section 2: Reality Check (Benchmark Analysis) */}
           <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-blue-500/20 shadow-lg dark:shadow-xl relative overflow-hidden group print:shadow-none print:border-slate-300 print:bg-white">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 opacity-50 print:hidden"></div>
+            <div className="no-print absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 opacity-50"></div>
             
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
               <div>
@@ -536,7 +536,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
               </div>
             </div>
 
-            <div className="flex flex-wrap md:flex-nowrap justify-around items-end w-full mb-8 px-2 md:px-4 pt-4 pb-2 gap-4">
+            <div className="reality-bars flex flex-wrap md:flex-nowrap justify-around items-end w-full mb-8 px-2 md:px-4 pt-4 pb-2 gap-4">
                {benchmarkAnalysis.map((metric, idx) => {
                   const isAcademic = metric.category === "Academics";
                   
@@ -558,7 +558,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                   ];
 
                   return (
-                    <div key={idx} className="flex flex-col items-center w-full md:w-1/3 min-h-[300px] print:min-h-[180px]">
+                    <div key={idx} className="flex flex-col items-center w-full md:w-1/3 min-h-[300px]">
                         {/* The Track */}
                         <div className="relative w-20 flex-1 bg-slate-100 dark:bg-slate-950 rounded-t-lg border-x border-t border-slate-200 dark:border-white/5 overflow-visible print:bg-slate-50 print:border-slate-300 mx-auto">
                             
@@ -607,7 +607,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 3: The Funnel & Constraints */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="funnel-grid grid grid-cols-1 md:grid-cols-2 gap-6">
              {/* Recruiting Funnel */}
              <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
@@ -735,7 +735,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       )}
 
       {/* TAKE ACTION FOOTER (PDF & EMAIL) */}
-      <div className="mt-12 border-t border-slate-200 dark:border-white/5 pt-8 print:hidden">
+      <div className="no-print mt-12 border-t border-slate-200 dark:border-white/5 pt-8">
          <div className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-6 rounded-2xl border border-slate-300 dark:border-white/10">
             <div className="mb-6 md:mb-0">
                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Save Your Report</h3>
@@ -764,7 +764,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
       {/* Email Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
+        <div className="no-print fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-6 relative animate-slide-up">
                 <button 
                     onClick={() => setShowEmailModal(false)}
@@ -817,7 +817,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       )}
 
       {/* MOBILE STICKY FOOTER CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-emerald-500/20 md:hidden z-50 print:hidden animate-slide-up shadow-2xl">
+      <div className="no-print fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-emerald-500/20 md:hidden z-50 animate-slide-up shadow-2xl">
         <a 
             href="https://warubisports.com" 
             target="_blank" 
@@ -835,7 +835,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       </div>
 
       {/* DESKTOP WARUBI PATHWAYS CTA */}
-      <div className="mt-12 mb-12 relative group cursor-pointer print:hidden hidden md:block">
+      <div className="no-print mt-12 mb-12 relative group cursor-pointer hidden md:block">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
         <div className="relative bg-slate-900 border border-white/10 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -864,7 +864,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       </div>
 
       {/* Beta Disclaimer */}
-      <div className="mt-8 pb-8 text-center print:hidden">
+      <div className="no-print mt-8 pb-8 text-center">
         <p className="text-[10px] text-slate-400 dark:text-slate-600 max-w-md mx-auto leading-relaxed font-mono">
           This tool is in beta, and we are continuing to refine the user experience and data validation. If you have suggestions that could make it better, your feedback is welcome via <a href="mailto:support@warubi-sports.com?subject=ExposureEngine%20-%20Feedback" className="text-emerald-500 hover:underline">support@warubi-sports.com</a>.
         </p>
