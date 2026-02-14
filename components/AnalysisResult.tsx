@@ -286,7 +286,17 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
       for (const canvas of sectionCanvases) {
         const aspectRatio = canvas.height / canvas.width;
-        const imgH = usableWidth * aspectRatio;
+        let imgW = usableWidth;
+        let imgH = usableWidth * aspectRatio;
+        let imgX = margin;
+
+        // If section is taller than one page, scale it down to fit
+        if (imgH > usableHeight) {
+          const scale = usableHeight / imgH;
+          imgH = usableHeight;
+          imgW = usableWidth * scale;
+          imgX = margin + (usableWidth - imgW) / 2; // center horizontally
+        }
 
         // If section won't fit and page isn't empty, start new page
         if (cursorY + imgH > margin + usableHeight && pages[pageNum].length > 0) {
@@ -297,9 +307,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
         pages[pageNum].push({
           img: canvas.toDataURL('image/jpeg', 0.92),
-          x: margin,
+          x: imgX,
           y: cursorY,
-          w: usableWidth,
+          w: imgW,
           h: imgH,
         });
         cursorY += imgH + gap;
