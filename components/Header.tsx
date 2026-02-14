@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, isDark }) => {
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-sans">Exposure<span className="text-emerald-500 dark:text-emerald-400">Engine</span></h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase">Powered by Warubi</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase">Powered by Warubi Sports</p>
           </div>
         </div>
         
