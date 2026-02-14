@@ -251,84 +251,68 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       // Wait for DOM reflow + chart re-render
       await new Promise(r => setTimeout(r, 400));
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
+      // Capture each section individually — no section ever splits across pages
+      const sectionEls = element.querySelectorAll('[data-pdf-section]');
+      const captureOpts = { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false };
+
+      // Capture header (everything before the first section)
+      const headerCanvas = await html2canvas(element.querySelector('.print-header') as HTMLElement || element, {
+        ...captureOpts,
+        height: sectionEls[0] ? (sectionEls[0] as HTMLElement).offsetTop : 200,
       });
 
-      // Restore immediately
+      const sectionCanvases: HTMLCanvasElement[] = [headerCanvas];
+      for (const sec of sectionEls) {
+        const canvas = await html2canvas(sec as HTMLElement, captureOpts);
+        sectionCanvases.push(canvas);
+      }
+
+      // Restore dark mode immediately
       element.classList.remove('pdf-capture');
       if (wasDark) document.documentElement.classList.add('dark');
 
-      // Generate PDF with section-aware pagination
+      // Pack sections onto A4 pages — each section stays whole
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
       const margin = 12;
+      const gap = 3; // mm gap between sections
       const usableWidth = pageWidth - margin * 2;
-      const usableHeight = pageHeight - margin * 2 - 10; // Reserve footer space
+      const usableHeight = pageHeight - margin * 2 - 10;
+      let cursorY = margin; // current Y position on current page
+      let pageNum = 0;
 
-      const pxPerMm = canvas.width / usableWidth;
-      const pageHeightPx = usableHeight * pxPerMm;
+      const pages: { img: string; x: number; y: number; w: number; h: number }[][] = [[]];
 
-      // Get section boundaries from the DOM (top of each section in canvas px)
-      const sections = element.querySelectorAll('[data-pdf-section]');
-      const containerRect = element.getBoundingClientRect();
-      const scale = canvas.width / containerRect.width;
-      const breakPoints: number[] = [];
-      sections.forEach(sec => {
-        const secRect = sec.getBoundingClientRect();
-        const topPx = (secRect.top - containerRect.top) * scale;
-        breakPoints.push(topPx);
-      });
-      breakPoints.sort((a, b) => a - b);
+      for (const canvas of sectionCanvases) {
+        const aspectRatio = canvas.height / canvas.width;
+        const imgH = usableWidth * aspectRatio;
 
-      // Build page slices: for each page, find the best break point
-      const slices: { srcY: number; srcH: number }[] = [];
-      let cursor = 0;
-      while (cursor < canvas.height) {
-        const idealEnd = cursor + pageHeightPx;
-        if (idealEnd >= canvas.height) {
-          // Last page — take whatever remains
-          slices.push({ srcY: cursor, srcH: canvas.height - cursor });
-          break;
+        // If section won't fit and page isn't empty, start new page
+        if (cursorY + imgH > margin + usableHeight && pages[pageNum].length > 0) {
+          pageNum++;
+          pages.push([]);
+          cursorY = margin;
         }
-        // Find the last section boundary that falls before idealEnd
-        let bestBreak = idealEnd;
-        for (let i = breakPoints.length - 1; i >= 0; i--) {
-          if (breakPoints[i] > cursor + pageHeightPx * 0.3 && breakPoints[i] <= idealEnd) {
-            bestBreak = breakPoints[i];
-            break;
-          }
-        }
-        slices.push({ srcY: cursor, srcH: bestBreak - cursor });
-        cursor = bestBreak;
+
+        pages[pageNum].push({
+          img: canvas.toDataURL('image/jpeg', 0.92),
+          x: margin,
+          y: cursorY,
+          w: usableWidth,
+          h: imgH,
+        });
+        cursorY += imgH + gap;
       }
 
-      const totalPages = slices.length;
+      // Render all pages
+      const totalPages = pages.length;
       for (let i = 0; i < totalPages; i++) {
         if (i > 0) pdf.addPage();
-        const { srcY, srcH } = slices[i];
-
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = srcH;
-        const ctx = pageCanvas.getContext('2d')!;
-        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-        const sliceH_mm = srcH / pxPerMm;
-        pdf.addImage(
-          pageCanvas.toDataURL('image/jpeg', 0.92),
-          'JPEG',
-          margin,
-          margin,
-          usableWidth,
-          sliceH_mm
-        );
-
-        // Footer on every page
+        for (const item of pages[i]) {
+          pdf.addImage(item.img, 'JPEG', item.x, item.y, item.w, item.h);
+        }
+        // Footer
         pdf.setFontSize(7);
         pdf.setTextColor(148, 163, 184);
         pdf.text('ExposureEngine by Warubi Sports', margin, pageHeight - 6);
@@ -730,9 +714,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 3: The Funnel & Constraints */}
-          <div data-pdf-section className="funnel-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="funnel-grid grid grid-cols-1 md:grid-cols-2 gap-6">
              {/* Recruiting Funnel */}
-             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+             <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
                    <Share2 className="w-5 h-5 mr-2 text-purple-500 dark:text-purple-400 print:text-purple-600" />
                    Recruiting Funnel
@@ -765,7 +749,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
              </div>
 
              {/* Constraints & Blockers */}
-             <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+             <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
                    <AlertTriangle className="w-5 h-5 mr-2 text-amber-500 dark:text-amber-400 print:text-amber-600" />
                    Performance Constraints
