@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AnalysisResult, RiskFlag, ActionItem, PlayerProfile, BenchmarkMetric } from '../types';
 import { supabase } from '../services/supabase';
 import {
@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import {
   AlertTriangle, CheckCircle2, Calendar, ArrowRight, Shield,
-  Download, Printer, Share2, TrendingUp, Activity, Minus,
+  Download, Share2, TrendingUp, Activity, Minus,
   AlertCircle, Info, Zap, User, Target, Globe, Trophy, Mail, X, Eye,
   Brain, Dumbbell, Video, BookOpen
 } from 'lucide-react';
@@ -56,6 +56,10 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
   const [email, setEmail] = useState('');
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // PDF generation
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Info State for Radar Charts
   const [showVisibilityInfo, setShowVisibilityInfo] = useState(false);
@@ -228,8 +232,117 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     return { label: "Developmental", color: "text-slate-500 dark:text-slate-400" };
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf')
+      ]);
+
+      const element = contentRef.current;
+      if (!element) return;
+
+      // Prepare for capture: switch to light mode, hide UI elements
+      const wasDark = document.documentElement.classList.contains('dark');
+      if (wasDark) document.documentElement.classList.remove('dark');
+      element.classList.add('pdf-capture');
+
+      // Wait for DOM reflow + chart re-render
+      await new Promise(r => setTimeout(r, 400));
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      // Restore immediately
+      element.classList.remove('pdf-capture');
+      if (wasDark) document.documentElement.classList.add('dark');
+
+      // Generate PDF with section-aware pagination
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 12;
+      const usableWidth = pageWidth - margin * 2;
+      const usableHeight = pageHeight - margin * 2 - 10; // Reserve footer space
+
+      const pxPerMm = canvas.width / usableWidth;
+      const pageHeightPx = usableHeight * pxPerMm;
+
+      // Get section boundaries from the DOM (top of each section in canvas px)
+      const sections = element.querySelectorAll('[data-pdf-section]');
+      const containerRect = element.getBoundingClientRect();
+      const scale = canvas.width / containerRect.width;
+      const breakPoints: number[] = [];
+      sections.forEach(sec => {
+        const secRect = sec.getBoundingClientRect();
+        const topPx = (secRect.top - containerRect.top) * scale;
+        breakPoints.push(topPx);
+      });
+      breakPoints.sort((a, b) => a - b);
+
+      // Build page slices: for each page, find the best break point
+      const slices: { srcY: number; srcH: number }[] = [];
+      let cursor = 0;
+      while (cursor < canvas.height) {
+        const idealEnd = cursor + pageHeightPx;
+        if (idealEnd >= canvas.height) {
+          // Last page — take whatever remains
+          slices.push({ srcY: cursor, srcH: canvas.height - cursor });
+          break;
+        }
+        // Find the last section boundary that falls before idealEnd
+        let bestBreak = idealEnd;
+        for (let i = breakPoints.length - 1; i >= 0; i--) {
+          if (breakPoints[i] > cursor + pageHeightPx * 0.3 && breakPoints[i] <= idealEnd) {
+            bestBreak = breakPoints[i];
+            break;
+          }
+        }
+        slices.push({ srcY: cursor, srcH: bestBreak - cursor });
+        cursor = bestBreak;
+      }
+
+      const totalPages = slices.length;
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        const { srcY, srcH } = slices[i];
+
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = srcH;
+        const ctx = pageCanvas.getContext('2d')!;
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        const sliceH_mm = srcH / pxPerMm;
+        pdf.addImage(
+          pageCanvas.toDataURL('image/jpeg', 0.92),
+          'JPEG',
+          margin,
+          margin,
+          usableWidth,
+          sliceH_mm
+        );
+
+        // Footer on every page
+        pdf.setFontSize(7);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text('ExposureEngine by Warubi Sports', margin, pageHeight - 6);
+        pdf.text('Confidential', pageWidth / 2, pageHeight - 6, { align: 'center' });
+        pdf.text(`${i + 1} / ${totalPages}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
+      }
+
+      pdf.save(`ExposureEngine_${profile.firstName}_${profile.lastName}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      window.print(); // Fallback
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -261,9 +374,19 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
   const athleticCeiling = getAthleticCeiling(readinessScore.athletic);
 
   return (
-    <div className="w-full animate-fade-in print:p-0">
+    <div ref={contentRef} className="w-full animate-fade-in print:p-0">
       <PrintHeader profile={profile} />
       <PrintFooter />
+
+      {/* PDF Generation Overlay */}
+      {isGeneratingPDF && (
+        <div className="no-print fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-sm font-medium text-slate-600">Generating PDF...</p>
+          </div>
+        </div>
+      )}
 
       {/* VIEW TOGGLE SWITCH */}
       <div className="no-print flex justify-between items-center mb-8">
@@ -304,7 +427,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         /* COACH VIEW - Brutally Honest Dashboard */
         <div className="space-y-6">
            {/* PLAYER BIO STATS - SCOUTING DB STYLE */}
-           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 font-mono text-sm shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
+           <div data-pdf-section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 font-mono text-sm shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8">
                  <div>
                     <span className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider mb-1">Name</span>
@@ -341,7 +464,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
               </div>
            </div>
 
-           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
+           <div data-pdf-section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-xl dark:shadow-none print:shadow-none print:border-slate-300">
               <h3 className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-widest mb-2 flex items-center">
                  <Shield className="w-4 h-4 mr-2" /> Internal Scouting Note
               </h3>
@@ -350,7 +473,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
               </p>
            </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div data-pdf-section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm print:shadow-none print:border-slate-300">
                  <h3 className="text-slate-900 dark:text-white font-bold mb-4">Recruiting Visibility</h3>
                  <div className="space-y-4">
@@ -387,7 +510,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         <div className="space-y-6">
           
           {/* Executive Summary */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+          <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center">
               <Zap className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
               Executive Summary
@@ -398,7 +521,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* New Player Readiness Pillars */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+          <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center mb-6">
                 <Target className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
                 Player Readiness Pillars
@@ -458,7 +581,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Radar Chart: Visibility Profile & Probability Grid */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl flex flex-col justify-between print:shadow-none print:border-slate-300 print:bg-white">
+          <div data-pdf-section className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl flex flex-col justify-between print:shadow-none print:border-slate-300 print:bg-white">
               <div>
                 <div className="flex justify-between items-start mb-6">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
@@ -526,7 +649,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
             </div>
 
           {/* Section 2: Reality Check (Benchmark Analysis) */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-blue-500/20 shadow-lg dark:shadow-xl relative overflow-hidden group print:shadow-none print:border-slate-300 print:bg-white">
+          <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-blue-500/20 shadow-lg dark:shadow-xl relative overflow-hidden group print:shadow-none print:border-slate-300 print:bg-white">
             <div className="no-print absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 opacity-50"></div>
             
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -607,7 +730,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 3: The Funnel & Constraints */}
-          <div className="funnel-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div data-pdf-section className="funnel-grid grid grid-cols-1 md:grid-cols-2 gap-6">
              {/* Recruiting Funnel */}
              <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
@@ -677,7 +800,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           </div>
 
           {/* Section 4: 90 Day Game Plan */}
-          <div className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+          <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center">
               <Calendar className="w-6 h-6 mr-3 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
               90 Day Game Plan
@@ -751,12 +874,22 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                   Email Report
                </button>
 
-               <button 
-                  onClick={handlePrint}
-                  className="flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors text-sm font-bold shadow-lg shadow-emerald-900/20"
+               <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-wait text-white rounded-lg transition-colors text-sm font-bold shadow-lg shadow-emerald-900/20"
                >
-                  <Printer className="w-5 h-5 mr-2" />
-                  Print / Save PDF
+                  {isGeneratingPDF ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5 mr-2" />
+                      Download PDF
+                    </>
+                  )}
                </button>
             </div>
          </div>

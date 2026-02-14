@@ -115,6 +115,65 @@
         .print-footer { display: none !important; }
       }
 
+      /* ─── PDF CAPTURE MODE ─── */
+      /* Applied temporarily during html2canvas capture */
+      .pdf-capture .no-print { display: none !important; }
+      .pdf-capture .print-header { display: block !important; }
+      .pdf-capture .print-footer { display: none !important; }
+      .pdf-capture {
+        background: white !important;
+        color: #0f172a !important;
+        max-width: 800px !important;
+      }
+      .pdf-capture [class*="dark:bg-slate-900"],
+      .pdf-capture [class*="dark:bg-slate-950"],
+      .pdf-capture [class*="bg-slate-900"],
+      .pdf-capture [class*="bg-slate-950"] {
+        background: white !important;
+      }
+      .pdf-capture [class*="dark:bg-slate-950/40"],
+      .pdf-capture [class*="bg-slate-50"] {
+        background: #f8fafc !important;
+      }
+      .pdf-capture [class*="dark:text-white"] {
+        color: #0f172a !important;
+      }
+      .pdf-capture [class*="dark:text-slate-2"],
+      .pdf-capture [class*="dark:text-slate-3"] {
+        color: #334155 !important;
+      }
+      .pdf-capture [class*="dark:text-slate-4"],
+      .pdf-capture [class*="dark:text-slate-5"] {
+        color: #64748b !important;
+      }
+      .pdf-capture [class*="dark:border-white/5"],
+      .pdf-capture [class*="dark:border-white/10"],
+      .pdf-capture [class*="dark:border-slate"] {
+        border-color: #cbd5e1 !important;
+      }
+      .pdf-capture [class*="shadow-"] {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+      }
+      .pdf-capture .backdrop-blur-sm,
+      .pdf-capture [class*="backdrop-blur"] {
+        backdrop-filter: none !important;
+      }
+      /* Force colored backgrounds to render */
+      .pdf-capture [class*="bg-emerald-"],
+      .pdf-capture [class*="bg-blue-"],
+      .pdf-capture [class*="bg-amber-"],
+      .pdf-capture [class*="bg-red-"],
+      .pdf-capture [class*="bg-purple-"] {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      /* Reality Check bars: score labels readable on white */
+      .pdf-capture .reality-bars [class*="bg-slate-800"] {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-color: #cbd5e1 !important;
+      }
+
       /* ─── PRINT STYLES ─── */
       @media print {
         @page {

@@ -164,6 +164,8 @@ const App: React.FC = () => {
       };
       if (leadData.email) {
         supabase.from('website_leads').upsert(leadData, { onConflict: 'email' }).then(() => {});
+        // Sync to Brevo for email automation
+        supabase.functions.invoke('sync-lead-to-brevo', { body: leadData }).catch(() => {});
       } else {
         supabase.from('website_leads').insert(leadData).then(() => {});
       }
