@@ -24,9 +24,9 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <div className="print-header mb-4 bg-white">
-      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 rounded-full mb-4"></div>
-      <div className="flex justify-between items-end pb-3 border-b border-slate-200">
+    <div className="print-header mb-2 bg-white">
+      <div className="h-0.5 w-full bg-gradient-to-r from-emerald-500 via-blue-500 to-emerald-500 rounded-full mb-3"></div>
+      <div className="flex justify-between items-end pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 leading-tight">Exposure<span className="text-emerald-600">Engine</span></h1>
           <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium mt-0.5">Scouting Report</p>
@@ -819,7 +819,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       {/* MOBILE STICKY FOOTER CTA */}
       <div className="no-print fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-emerald-500/20 md:hidden z-50 animate-slide-up shadow-2xl">
         <a 
-            href="https://warubisports.com" 
+            href="https://warubi-sports.com/eliteplayer-pathways/"
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center justify-between w-full px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl"
@@ -852,7 +852,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
             </div>
             
             <a 
-              href="https://warubisports.com" 
+              href="https://warubi-sports.com/eliteplayer-pathways/"
               target="_blank" 
               rel="noopener noreferrer"
               className="relative z-10 shrink-0 flex items-center px-8 py-4 bg-white text-slate-950 hover:bg-emerald-50 rounded-xl font-bold text-sm transition-all transform group-hover:scale-105 shadow-xl shadow-emerald-900/20"
