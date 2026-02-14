@@ -322,6 +322,16 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         for (const item of pages[i]) {
           pdf.addImage(item.img, 'JPEG', item.x, item.y, item.w, item.h);
         }
+        // Watermark — diagonal "UNOFFICIAL" across each page
+        pdf.saveGraphicsState();
+        pdf.setGState(new (pdf as any).GState({ opacity: 0.06 }));
+        pdf.setFontSize(80);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('UNOFFICIAL', pageWidth / 2, pageHeight / 2, {
+          align: 'center',
+          angle: 45,
+        });
+        pdf.restoreGraphicsState();
         // Footer
         pdf.setFontSize(7);
         pdf.setTextColor(148, 163, 184);
