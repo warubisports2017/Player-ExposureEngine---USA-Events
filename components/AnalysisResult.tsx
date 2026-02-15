@@ -249,7 +249,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       element.classList.add('pdf-capture');
 
       // Wait for DOM reflow + Recharts ResponsiveContainer re-render
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 1200));
 
       // Capture each section individually — no section ever splits across pages
       const sectionEls = element.querySelectorAll('[data-pdf-section]');
