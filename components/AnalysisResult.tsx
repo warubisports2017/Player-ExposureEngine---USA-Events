@@ -251,68 +251,6 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       // Wait for DOM reflow + Recharts ResponsiveContainer re-render
       await new Promise(r => setTimeout(r, 800));
 
-      // Pre-rasterize SVG charts to prevent html2canvas rendering differences
-      // html2canvas interprets SVGs slightly differently than the browser
-      const svgBackups: { parent: Element; img: HTMLImageElement; svg: Element }[] = [];
-      const svgElements = element.querySelectorAll('.recharts-surface');
-      for (const svg of svgElements) {
-        const rect = svg.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) continue;
-
-        const clone = svg.cloneNode(true) as SVGElement;
-        clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        clone.setAttribute('width', String(rect.width));
-        clone.setAttribute('height', String(rect.height));
-
-        // Inline all computed styles into the SVG clone
-        const allEls = clone.querySelectorAll('*');
-        const origEls = svg.querySelectorAll('*');
-        allEls.forEach((el, i) => {
-          if (origEls[i]) {
-            const computed = window.getComputedStyle(origEls[i]);
-            const important = ['fill', 'stroke', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity', 'font-size', 'font-weight', 'font-family', 'text-anchor'];
-            important.forEach(prop => {
-              const val = computed.getPropertyValue(prop);
-              if (val) (el as SVGElement).style.setProperty(prop, val);
-            });
-          }
-        });
-
-        const svgData = new XMLSerializer().serializeToString(clone);
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-
-        try {
-          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = reject;
-            image.src = url;
-          });
-
-          const canvas = document.createElement('canvas');
-          canvas.width = rect.width * 2;
-          canvas.height = rect.height * 2;
-          const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          const imgEl = document.createElement('img');
-          imgEl.src = canvas.toDataURL('image/png');
-          imgEl.style.width = rect.width + 'px';
-          imgEl.style.height = rect.height + 'px';
-          imgEl.style.display = 'block';
-
-          svg.parentElement!.insertBefore(imgEl, svg);
-          (svg as HTMLElement).style.display = 'none';
-          svgBackups.push({ parent: svg.parentElement!, img: imgEl, svg });
-        } finally {
-          URL.revokeObjectURL(url);
-        }
-      }
-
-      // Small delay for rasterized images to render
-      await new Promise(r => setTimeout(r, 100));
-
       // Capture each section individually — no section ever splits across pages
       const sectionEls = element.querySelectorAll('[data-pdf-section]');
       const captureOpts = { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false };
@@ -329,11 +267,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         sectionCanvases.push(canvas);
       }
 
-      // Restore SVGs and dark mode
-      for (const backup of svgBackups) {
-        (backup.svg as HTMLElement).style.display = '';
-        backup.img.remove();
-      }
+      // Restore dark mode
       element.classList.remove('pdf-capture');
       if (wasDark) document.documentElement.classList.add('dark');
 
