@@ -167,6 +167,13 @@
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      /* Radar chart: lock dimensions to match on-screen rendering */
+      .pdf-capture .radar-wrap {
+        height: 300px !important;
+        width: 500px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
       /* Reality Check bars: score labels readable on white */
       .pdf-capture .reality-bars [class*="bg-slate-800"] {
         background: #f1f5f9 !important;
