@@ -270,7 +270,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         allEls.forEach((el, i) => {
           if (origEls[i]) {
             const computed = window.getComputedStyle(origEls[i]);
-            const important = ['fill', 'stroke', 'stroke-width', 'opacity', 'font-size', 'font-weight', 'font-family', 'text-anchor'];
+            const important = ['fill', 'stroke', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity', 'font-size', 'font-weight', 'font-family', 'text-anchor'];
             important.forEach(prop => {
               const val = computed.getPropertyValue(prop);
               if (val) (el as SVGElement).style.setProperty(prop, val);
@@ -682,10 +682,10 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                 <div className="radar-wrap h-[300px] w-full mb-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                      <PolarGrid stroke={isDark ? "#334155" : "#e2e8f0"} />
-                      <PolarAngleAxis dataKey="level" tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 700 }} />
+                      <PolarGrid stroke={isGeneratingPDF ? "#94a3b8" : (isDark ? "#334155" : "#e2e8f0")} />
+                      <PolarAngleAxis dataKey="level" tick={{ fill: isGeneratingPDF ? '#1e293b' : (isDark ? '#94a3b8' : '#64748b'), fontSize: 12, fontWeight: 700 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                      <Radar name="Visibility" dataKey="visibilityPercent" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                      <Radar name="Visibility" dataKey="visibilityPercent" stroke="#3b82f6" fill="#3b82f6" fillOpacity={isGeneratingPDF ? 0.55 : 0.4} />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: isDark ? '#0f172a' : '#ffffff', 
