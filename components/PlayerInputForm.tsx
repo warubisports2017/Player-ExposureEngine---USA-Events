@@ -339,6 +339,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
         // Migration support for old citizenship format (string -> string[])
         if (typeof parsed.citizenship === 'string') {
           parsed.citizenship = [parsed.citizenship];
+        } else if (!Array.isArray(parsed.citizenship)) {
+          parsed.citizenship = [];
         }
         setProfile(parsed);
         // Re-calculate height ft/in for local state
@@ -688,7 +690,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
               onChange={(c) => handleInputChange('citizenship', c)}
             />
             {/* Show manual input if 'Other' is selected */}
-            {profile.citizenship.includes("Other") && (
+            {profile.citizenship?.includes("Other") && (
                <div className="mt-2 animate-fade-in">
                  <input
                   type="text"
