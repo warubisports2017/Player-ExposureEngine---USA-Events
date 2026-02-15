@@ -93,6 +93,15 @@ D - Compute base scores by league tier and gender
 You will score each level on a 0 to 100 scale before market adjustments.
 **IMPORTANT**: These scores represent "Ability to make a roster", not just "Targeting Fit". An Elite player has high ability for lower levels too.
 
+**2025-26 Scholarship Reality:**
+- NCAA D1: Up to 28 scholarships per team (roster limit), both genders. Women's has ~335 programs; men's ~205.
+- NCAA D2: Up to 9 scholarships per team. Women's has ~265 programs; men's ~210.
+- NCAA D3: No athletic scholarships. ~441 women's programs; ~420 men's.
+- NAIA: Variable (8-12 per team). ~230 women's; ~200 men's.
+- JUCO: Variable. ~160 women's; ~120 men's.
+
+Girls have more total opportunity at every level. This is already reflected in the higher base scores below.
+
 For boys, base visibility:
 Elite boys (MLS NEXT, ECNL Boys): D1: 75, D2: 85, D3: 60, NAIA: 85, JUCO: 95
 High boys (ECNL RL, USYS NL, Elite 64): D1: 35, D2: 60, D3: 65, NAIA: 70, JUCO: 80
@@ -100,10 +109,10 @@ Mid boys (NPL, regional): D1: 15, D2: 35, D3: 60, NAIA: 55, JUCO: 65
 Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
 
 For girls, base visibility:
-Elite girls (ECNL, GA): D1: 80, D2: 90, D3: 65, NAIA: 85, JUCO: 95
-High girls (ECNL RL, USYS NL, Elite 64): D1: 40, D2: 65, D3: 70, NAIA: 75, JUCO: 85
-Mid girls (NPL, regional): D1: 15, D2: 35, D3: 65, NAIA: 55, JUCO: 65
-Low girls (local/HS): D1: 5, D2: 20, D3: 50, NAIA: 50, JUCO: 60
+Elite girls (ECNL, GA): D1: 88, D2: 93, D3: 68, NAIA: 88, JUCO: 97
+High girls (ECNL RL, USYS NL, Elite 64): D1: 48, D2: 68, D3: 73, NAIA: 78, JUCO: 88
+Mid girls (NPL, regional): D1: 20, D2: 40, D3: 68, NAIA: 60, JUCO: 70
+Low girls (local/HS): D1: 8, D2: 25, D3: 52, NAIA: 52, JUCO: 65
 
 E - Adjust scores for ability
 
@@ -142,6 +151,42 @@ College coaches prefer players with adult-level experience (men's/women's league
      * Significant Boost: D1: +10, D2: +10, NAIA: +5.
    - "Adult_Amateur_League":
      * Minor Boost: D2: +5, NAIA: +5.
+
+G3 - Gender-Specific Recruiting Dynamics (CRITICAL)
+
+Women's college soccer has significantly more programs than men's at every level:
+- D1: ~335 women's programs vs ~205 men's (63% more opportunity)
+- D2: ~265 vs ~210 (26% more)
+- D3: ~441 vs ~420 (5% more)
+- NAIA: ~230 vs ~200 (15% more)
+- JUCO: ~160 vs ~120 (33% more)
+
+As of 2025-26, NCAA D1 teams can offer up to 28 scholarships (roster limit) for BOTH genders. The old 14/9.9 split no longer applies. But the program count advantage for women remains significant.
+
+1. Recruiting Timeline (Gender-Differentiated):
+   Women's soccer coaches evaluate earlier and commit earlier than men's:
+   - Female athletes: Peak recruiting window = sophomore to junior year (grad year minus 2-3 years from now)
+   - Male athletes: Peak recruiting window = junior to senior year (grad year minus 1-2 years from now)
+
+   Apply timeline adjustment:
+   - If female AND within 2-3 years of graduation: +5 to D1/D2 (in peak window)
+   - If female AND 4+ years from graduation: no penalty (still developing, but flag "Build your profile now")
+   - If female AND within 1 year of graduation: -5 D1/D2 (window closing, urgency critical)
+   - If male AND within 1-2 years of graduation: +5 to D1/D2 (entering peak window)
+   - If male AND 3+ years from graduation: no adjustment (normal timeline)
+
+2. Position Scarcity (Gender-Differentiated):
+   Goalkeeper is the most difficult position to recruit at the college level, especially in women's soccer.
+   - If position is GK AND gender is Female: +8 to D1, +5 to D2 (critical scarcity — women's coaches actively seek GKs)
+   - If position is GK AND gender is Male: +3 to D1, +3 to D2 (moderate scarcity)
+   - If position is CB/CDM AND gender is Female: +3 to D1/D2 (defensive positions in high demand)
+   - No adjustment for attacking positions (forward/wing markets are saturated)
+
+3. Coach Evaluation Context:
+   In the coachShortEvaluation and plainLanguageSummary, explicitly reference gender-specific market dynamics when relevant:
+   - For a girl in ECNL/GA: "The women's D1 landscape offers 335+ programs — with your ECNL background, you have realistic paths at multiple levels."
+   - For a boy in MLS NEXT: "Men's D1 is highly competitive with only ~205 programs. Your MLS NEXT experience puts you in the conversation, but you'll need video and outreach to stand out."
+   - For a female GK: "Quality goalkeepers are the #1 recruiting need in women's college soccer. Your position alone opens doors that field players don't have."
 
 After all adjustments, clamp each level score between 0 and 100. Call this "on_paper_fit".
 
