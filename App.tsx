@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Header from './components/Header';
 import PlayerInputForm from './components/PlayerInputForm';
-import AnalysisResultView from './components/AnalysisResult';
+const AnalysisResultView = React.lazy(() => import('./components/AnalysisResult'));
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
 import { supabase } from './services/supabase';
@@ -91,6 +91,12 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [showMethodology, setShowMethodology] = useState(false);
 
+  // Capture referral source from URL (e.g., ?ref=coach-smith)
+  const [referralSource] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('ref') || null;
+  });
+
   // Initialize theme from localStorage or system preference
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -161,6 +167,7 @@ const App: React.FC = () => {
         visibility_scores: Object.fromEntries(
           result.visibilityScores.map((v: any) => [v.level.toLowerCase(), v.visibilityPercent])
         ),
+        referral_source: referralSource,
       };
       if (leadData.email) {
         supabase.from('website_leads').upsert(leadData, { onConflict: 'email' }).then(() => {});
@@ -275,7 +282,13 @@ const App: React.FC = () => {
 
           </div>
         ) : (
-          <AnalysisResultView result={analysisResult} profile={profile!} onReset={handleReset} isDark={theme === 'dark'} />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent"></div>
+            </div>
+          }>
+            <AnalysisResultView result={analysisResult} profile={profile!} onReset={handleReset} isDark={theme === 'dark'} />
+          </Suspense>
         )}
       </main>
 
