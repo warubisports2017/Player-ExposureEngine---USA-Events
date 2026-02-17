@@ -261,12 +261,12 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   
   const loadingTips = [
-    "Did you know? Over 70% of D1 scholarships are committed before senior year begins.",
-    "Coaches spend an average of 3 minutes watching a highlight tape. The first 30 seconds are critical.",
-    "D3 schools do not offer athletic scholarships, but 80% of D3 athletes receive academic aid.",
-    "A 3.5+ GPA opens up 40% more roster spots than a 2.5 GPA.",
-    "Personalized emails to coaches have a 5x higher response rate than generic blasts.",
-    "There are over 1,200 colleges offering men's soccer, but only 205 are NCAA Division 1."
+    "Only 2% of high school athletes earn NCAA scholarships — but over 500,000 compete each year.",
+    "Coaches decide in 30–60 seconds whether to keep watching your highlight tape.",
+    "D3 schools can't offer athletic scholarships, but 80% of D3 athletes receive academic aid.",
+    "There are 1,400+ colleges with men's soccer — 74% of D1 teams recruit internationally.",
+    "98% of college coaches prefer personalized emails over generic outreach.",
+    "Nearly 25,000 international athletes compete in the NCAA — a 283% increase since 2000."
   ];
 
   const US_REGIONS = [
