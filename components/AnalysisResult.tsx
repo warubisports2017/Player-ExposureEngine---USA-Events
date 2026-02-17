@@ -345,7 +345,16 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         pdf.text(`${i + 1} / ${totalPages}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
       }
 
-      pdf.save(`ExposureEngine_${profile.firstName}_${profile.lastName}.pdf`);
+      // On mobile, pdf.save() opens in the same tab with no way back.
+      // Use blob URL in a new tab instead.
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        const blob = pdf.output('blob');
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } else {
+        pdf.save(`ExposureEngine_${profile.firstName}_${profile.lastName}.pdf`);
+      }
     } catch (err) {
       console.error('PDF generation failed:', err);
       window.print(); // Fallback
