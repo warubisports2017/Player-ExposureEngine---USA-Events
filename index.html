@@ -4,14 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ExposureEngine</title>
-    <style>body{background-color:#020617}html.dark{color-scheme:dark}</style>
+    <style>
+      body{background-color:#020617;margin:0}
+      html.dark{color-scheme:dark}
+      #loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px}
+      #loading svg{width:40px;height:40px;animation:spin 1s linear infinite}
+      #loading span{color:#94a3b8;font-family:system-ui;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+      @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"></noscript>
 </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="loading"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg><span>Loading</span></div></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
