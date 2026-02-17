@@ -5,7 +5,6 @@ import PlayerInputForm from './components/PlayerInputForm';
 const AnalysisResultView = React.lazy(() => import('./components/AnalysisResult'));
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
-import { supabase } from './services/supabase';
 import { GraduationCap, Users, ShieldCheck, X } from 'lucide-react';
 
 const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
@@ -139,7 +138,7 @@ const App: React.FC = () => {
       const result = await analyzeExposure(submittedProfile);
       setAnalysisResult(result);
 
-      // Fire-and-forget save to Supabase
+      // Fire-and-forget save to Supabase (lazy-loaded to reduce main bundle)
       const leadData = {
         email: submittedProfile.email || null,
         first_name: submittedProfile.firstName,
@@ -169,6 +168,7 @@ const App: React.FC = () => {
         ),
         referral_source: referralSource,
       };
+      const { supabase } = await import('./services/supabase');
       if (leadData.email) {
         supabase.from('website_leads').upsert(leadData, { onConflict: 'email' }).then(() => {});
         // Sync to Brevo for email automation
