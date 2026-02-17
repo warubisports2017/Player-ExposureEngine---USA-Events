@@ -247,6 +247,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       const wasDark = document.documentElement.classList.contains('dark');
       if (wasDark) document.documentElement.classList.remove('dark');
       element.classList.add('pdf-capture');
+      // Force desktop width on mobile so html2canvas captures at 800px
+      element.style.minWidth = '800px';
+      element.style.width = '800px';
 
       // Wait for DOM reflow + Recharts ResponsiveContainer re-render
       await new Promise(r => setTimeout(r, 1200));
@@ -267,7 +270,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         sectionCanvases.push(canvas);
       }
 
-      // Restore dark mode
+      // Restore layout and dark mode
+      element.style.minWidth = '';
+      element.style.width = '';
       element.classList.remove('pdf-capture');
       if (wasDark) document.documentElement.classList.add('dark');
 
