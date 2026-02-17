@@ -493,7 +493,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
       dateOfBirth: '2007-06-15',
       secondaryPositions: [],
       events: [
-        { name: 'Surf Cup', type: 'Showcase', collegesNoted: 'Local Colleges' }
+        { name: 'Surf Cup', type: 'Showcase', collegesNoted: '' }
       ]
     }));
     setIsDemoOpen(false);
@@ -1184,7 +1184,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                       <option value="HS_Playoffs">HS Playoffs</option>
                     </select>
                     <input 
-                      placeholder="Colleges Spoken To" 
+                      placeholder="e.g. UCLA, Cal State, SDSU" 
                       className={`${inputClass} py-1.5 text-xs bg-white dark:bg-slate-900 border-none`}
                       value={event.collegesNoted}
                       onChange={(e) => updateEvent(idx, 'collegesNoted', e.target.value)}
