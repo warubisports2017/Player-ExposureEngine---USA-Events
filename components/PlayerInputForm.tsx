@@ -703,25 +703,38 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                </div>
             )}
           </div>
-          <div>
-            <Label>Adult / International Experience</Label>
-             <div className="relative">
-              <select
-                className={selectClass}
-                value={profile.experienceLevel}
-                onChange={(e) => handleInputChange('experienceLevel', e.target.value)}
+        </div>
+
+        {/* Experience Level Cards */}
+        <div className="mb-6">
+          <Label>Adult / International Experience</Label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {([
+              { value: 'Youth_Club_Only', label: 'Youth Club Only', desc: 'Local travel team or recreational league only' },
+              { value: 'High_School_Varsity', label: 'High School Varsity', desc: 'Made the varsity squad at your high school' },
+              { value: 'Adult_Amateur_League', label: 'Adult Amateur / Sunday League', desc: 'Playing in an adult rec or amateur league' },
+              { value: 'Semi_Pro_UPSL_NPSL_WPSL', label: 'Semi-Pro', desc: 'Competitive league: UPSL, NPSL, WPSL, USL2, etc.' },
+              { value: 'International_Academy_U19', label: 'Intl Academy', desc: 'Pro club youth academy abroad (e.g., Bundesliga U19)' },
+              { value: 'Pro_Academy_Reserve', label: 'Pro Academy / Reserve', desc: 'Actual pro reserve team (e.g., LA Galaxy II, NYCFC II)' },
+            ] as const).map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleInputChange('experienceLevel', opt.value)}
+                className={`text-left p-3 rounded-lg border transition-all ${
+                  profile.experienceLevel === opt.value
+                    ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-white dark:bg-slate-950/50 border-slate-300 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+                }`}
               >
-                <option value="Youth_Club_Only">Youth Club Only</option>
-                <option value="High_School_Varsity">High School Varsity Only</option>
-                <option value="Adult_Amateur_League">Adult Amateur / Sunday League</option>
-                <option value="Semi_Pro_UPSL_NPSL_WPSL">Semi-Pro (UPSL, NPSL, WPSL, USL2)</option>
-                <option value="International_Academy_U19">Intl Academy (U19/U17 Bundesliga, etc)</option>
-                <option value="Pro_Academy_Reserve">Professional Academy / Reserve Team</option>
-              </select>
-              <div className="absolute right-3 top-3 pointer-events-none text-slate-500">
-                <ChevronRight className="w-4 h-4 rotate-90" />
-              </div>
-            </div>
+                <div className="text-sm font-medium">{opt.label}</div>
+                <div className={`text-[11px] mt-0.5 ${
+                  profile.experienceLevel === opt.value
+                    ? 'text-emerald-600/70 dark:text-emerald-400/70'
+                    : 'text-slate-400 dark:text-slate-500'
+                }`}>{opt.desc}</div>
+              </button>
+            ))}
           </div>
         </div>
 
