@@ -132,10 +132,10 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       maturityKeywords.some(k => item.description.toLowerCase().includes(k))
     );
 
-    const alreadyHasExperience = 
-        profile.experienceLevel === 'Semi_Pro_UPSL_NPSL_WPSL' || 
-        profile.experienceLevel === 'International_Academy_U19' || 
-        profile.experienceLevel === 'Pro_Academy_Reserve';
+    const alreadyHasExperience =
+        profile.experienceLevel.includes('Semi_Pro_UPSL_NPSL_WPSL') ||
+        profile.experienceLevel.includes('International_Academy_U19') ||
+        profile.experienceLevel.includes('Pro_Academy_Reserve');
 
     if (!hasMaturityItem && !alreadyHasExperience) {
          const maturityItem: ActionItem = {

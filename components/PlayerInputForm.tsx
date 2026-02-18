@@ -173,70 +173,70 @@ const CountryMultiSelect = ({ selected, onChange }: { selected: string[], onChan
 const DEMO_PROFILES: Record<string, Partial<PlayerProfile>> = {
   "Blue Chip D1 (MLS NEXT)": {
     firstName: 'Alex', lastName: 'Romero', gender: 'Male', position: 'CM', gradYear: 2026, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
+    experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
     academics: { graduationYear: 2026, gpa: 3.6, testScore: '1250 SAT' },
     athleticProfile: { speed: 'Elite', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Top_10_Percent' },
     seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, gamesPlayed: 28, honors: 'All-American' }]
   },
   "Solid Recruit (ECNL)": {
     firstName: 'Liam', lastName: 'Smith', gender: 'Male', position: 'CB', gradYear: 2026, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
+    experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.2, testScore: '1100 SAT' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
     seasons: [{ year: 2025, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, gamesPlayed: 24, honors: '1st Team All-Conference' }]
   },
   "High Academic D3 (ECNL RL)": {
     firstName: 'Emma', lastName: 'Davis', gender: 'Female', position: 'CDM', gradYear: 2025, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
+    experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
     academics: { graduationYear: 2025, gpa: 4.0, testScore: '1450 SAT' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
     seasons: [{ year: 2025, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, gamesPlayed: 20, honors: 'Scholar Athlete' }]
   },
   "D2/NAIA Target (NPL/USYS)": {
     firstName: 'Carlos', lastName: 'Mendez', gender: 'Male', position: 'RW', gradYear: 2026, citizenship: ['USA', 'Mexico'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'Raw_Game_Footage', coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
+    experienceLevel: [], videoType: 'Raw_Game_Footage', coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 2.8, testScore: '' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Above_Average', workRate: 'Above_Average', technical: 'Above_Average', tactical: 'Average' },
     seasons: [{ year: 2025, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, gamesPlayed: 22, honors: 'Team MVP' }]
   },
   "JUCO Route (Academic Risk)": {
     firstName: 'Jayden', lastName: 'Williams', gender: 'Male', position: 'ST', gradYear: 2025, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'Edited_Highlight_Reel', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
+    experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2025, gpa: 2.1, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Elite', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Above_Average' },
     seasons: [{ year: 2025, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, gamesPlayed: 25, honors: 'Top Scorer' }]
   },
   "High School Star (No Club)": {
     firstName: 'Sarah', lastName: 'Johnson', gender: 'Female', position: 'CAM', gradYear: 2026, citizenship: ['USA'],
-    experienceLevel: 'High_School_Varsity', videoType: 'Raw_Game_Footage', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    experienceLevel: [], videoType: 'Raw_Game_Footage', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '1200' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Average' },
     seasons: [{ year: 2025, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, gamesPlayed: 18, honors: 'State Player of Year' }]
   },
   "International / Semi-Pro": {
     firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024, citizenship: ['Other'], otherCitizenship: 'Croatia',
-    experienceLevel: 'Semi_Pro_UPSL_NPSL_WPSL', videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
+    experienceLevel: ['Semi_Pro_UPSL_NPSL_WPSL', 'International_Academy_U19'], videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
     academics: { graduationYear: 2024, gpa: 3.0, testScore: 'TOEFL Passed' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Elite' },
     seasons: [{ year: 2025, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, gamesPlayed: 30, honors: 'League XI' }]
   },
   "Bench Warmer (MLS NEXT)": {
     firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
+    experienceLevel: [], videoType: 'None', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2027, gpa: 3.3, testScore: '' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Average', tactical: 'Average' },
     seasons: [{ year: 2025, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, gamesPlayed: 3, cleanSheets: 0, honors: '' }]
   },
   "The Ghost (No Video)": {
     firstName: 'Chris', lastName: 'Invisible', gender: 'Male', position: 'RB', gradYear: 2026, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    experienceLevel: [], videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Average', endurance: 'Top_10_Percent', workRate: 'Elite', technical: 'Above_Average', tactical: 'Average' },
     seasons: [{ year: 2025, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, gamesPlayed: 24, honors: '' }]
   },
   "Recreational / Beginner": {
     firstName: 'Sam', lastName: 'Rookie', gender: 'Male', position: 'CM', gradYear: 2028, citizenship: ['USA'],
-    experienceLevel: 'Youth_Club_Only', videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
+    experienceLevel: [], videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2028, gpa: 3.0, testScore: '' },
     athleticProfile: { speed: 'Below_Average', strength: 'Below_Average', endurance: 'Average', workRate: 'Average', technical: 'Below_Average', tactical: 'Below_Average' },
     seasons: [{ year: 2025, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, gamesPlayed: 10, honors: '' }]
@@ -289,7 +289,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
     gender: 'Male',
     dateOfBirth: '',
     citizenship: [],
-    experienceLevel: 'Youth_Club_Only',
+    experienceLevel: [],
     position: 'CM',
     secondaryPositions: [],
     dominantFoot: 'Right',
@@ -705,36 +705,53 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
           </div>
         </div>
 
-        {/* Experience Level Cards */}
+        {/* Experience Level Cards (Multi-Select) */}
         <div className="mb-6">
-          <Label>Adult / International Experience</Label>
+          <Label>Adult / International Experience (select all that apply)</Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {([
-              { value: 'Youth_Club_Only', label: 'Youth Club Only', desc: 'Local travel team or recreational league only' },
-              { value: 'High_School_Varsity', label: 'High School Varsity', desc: 'Made the varsity squad at your high school' },
-              { value: 'Adult_Amateur_League', label: 'Adult Amateur / Sunday League', desc: 'Playing in an adult rec or amateur league' },
-              { value: 'Semi_Pro_UPSL_NPSL_WPSL', label: 'Semi-Pro', desc: 'Competitive league: UPSL, NPSL, WPSL, USL2, etc.' },
-              { value: 'International_Academy_U19', label: 'Intl Academy', desc: 'Pro club youth academy abroad (e.g., Bundesliga U19)' },
-              { value: 'Pro_Academy_Reserve', label: 'Pro Academy / Reserve', desc: 'Actual pro reserve team (e.g., LA Galaxy II, NYCFC II)' },
-            ] as const).map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handleInputChange('experienceLevel', opt.value)}
-                className={`text-left p-3 rounded-lg border transition-all ${
-                  profile.experienceLevel === opt.value
-                    ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-white dark:bg-slate-950/50 border-slate-300 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
-                }`}
-              >
-                <div className="text-sm font-medium">{opt.label}</div>
-                <div className={`text-[11px] mt-0.5 ${
-                  profile.experienceLevel === opt.value
-                    ? 'text-emerald-600/70 dark:text-emerald-400/70'
-                    : 'text-slate-400 dark:text-slate-500'
-                }`}>{opt.desc}</div>
-              </button>
-            ))}
+              { value: 'Youth_Club_Only' as const, label: 'Youth Club Only', desc: 'No adult or international league experience yet' },
+
+              { value: 'Adult_Amateur_League' as const, label: 'Adult Amateur / Sunday League', desc: 'Playing in an adult rec or amateur league' },
+              { value: 'Semi_Pro_UPSL_NPSL_WPSL' as const, label: 'Semi-Pro', desc: 'Competitive league: UPSL, NPSL, WPSL, USL2, etc.' },
+              { value: 'International_Academy_U19' as const, label: 'Intl Academy', desc: 'Pro club youth academy abroad (e.g., Bundesliga U19)' },
+              { value: 'Pro_Academy_Reserve' as const, label: 'Pro Academy / Reserve', desc: 'Actual pro reserve team (e.g., LA Galaxy II, NYCFC II)' },
+            ]).map(opt => {
+              const isSelected = profile.experienceLevel.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    const current = profile.experienceLevel;
+                    if (opt.value === 'Youth_Club_Only') {
+                      // Youth Club Only is mutually exclusive — clears all others
+                      handleInputChange('experienceLevel', isSelected ? [] : ['Youth_Club_Only']);
+                    } else {
+                      // Toggle this option, remove Youth_Club_Only if present
+                      const without = current.filter(v => v !== 'Youth_Club_Only' && v !== opt.value);
+                      const next = isSelected ? without : [...without, opt.value];
+                      handleInputChange('experienceLevel', next);
+                    }
+                  }}
+                  className={`text-left p-3 rounded-lg border transition-all relative ${
+                    isSelected
+                      ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-white dark:bg-slate-950/50 border-slate-300 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900'
+                  }`}
+                >
+                  {isSelected && (
+                    <Check className="absolute top-2 right-2 w-3.5 h-3.5 text-emerald-500" />
+                  )}
+                  <div className="text-sm font-medium pr-5">{opt.label}</div>
+                  <div className={`text-[11px] mt-0.5 ${
+                    isSelected
+                      ? 'text-emerald-600/70 dark:text-emerald-400/70'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }`}>{opt.desc}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 

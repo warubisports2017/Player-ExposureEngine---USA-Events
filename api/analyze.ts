@@ -114,19 +114,27 @@ G - Extra tweak for role and minutes
   - **All other leagues**: Bench role penalizes all levels (-10).
 
 G2 - Maturity & Experience Bonus (CRITICAL FACTOR)
-College coaches prefer players with adult-level experience (men's/women's leagues) or international experience due to physical and tactical maturity.
+College soccer is intense — 18-24 year olds competing together. Coaches heavily favor
+players with adult-level or international experience for physical and tactical maturity.
+The 'experienceLevel' field is now an ARRAY (select-all-that-apply).
 
-1. Age Factor: Calculate age based on dateOfBirth.
-   - If player is > 18.5 years old: They have "College Body" potential. Small Boost (+5 to D1/D2/NAIA).
+1. Age Factor (from dateOfBirth):
+   - If player > 18.5 years old: +5 to D1/D2/NAIA ("College Body" potential)
 
-2. Experience Factor (Check 'experienceLevel'):
-   - "Semi_Pro_UPSL_NPSL_WPSL" OR "Pro_Academy_Reserve":
-     * Massive Boost: D1: +15, D2: +15, NAIA: +10.
-     * Note in summary: "Semi-pro experience significantly increases recruitability."
-   - "International_Academy_U19":
-     * Significant Boost: D1: +10, D2: +10, NAIA: +5.
-   - "Adult_Amateur_League":
-     * Minor Boost: D2: +5, NAIA: +5.
+2. Experience Factor (check ALL values in 'experienceLevel' array):
+   Apply the HIGHEST applicable tier:
+   - Tier 1 — "Pro_Academy_Reserve": D1 +15, D2 +15, D3 +5, NAIA +10, JUCO +5
+   - Tier 2 — "Semi_Pro_UPSL_NPSL_WPSL" OR "International_Academy_U19": D1 +12, D2 +12, D3 +5, NAIA +8, JUCO +5
+   - Tier 3 — "Adult_Amateur_League": D1 +5, D2 +8, D3 +3, NAIA +8, JUCO +5
+   - Empty array or no selections: no bonus (baseline)
+
+3. Breadth Bonus (rewards diverse experience):
+   - If 2+ selections from Tier 1-3: additional +5 to D1/D2, +3 to NAIA
+   - If 3+ selections from Tier 1-3: additional +8 to D1/D2, +5 to NAIA/D3
+   (Breadth shows adaptability — a player who competed in UPSL AND trained at Bundesliga U19 has elite maturity)
+
+4. Summary note: If any Tier 1-2 experience exists, include in summary:
+   "[Experience type] significantly increases recruitability due to proven maturity."
 
 G3 - Gender-Specific Recruiting Dynamics (CRITICAL)
 
@@ -207,7 +215,7 @@ Map your calculated values from the steps above to these fields:
    - athletic: map from your Ability Band (Low=40, Medium=75, High=95)
    - academic: map from your Academic Band (Problem=40, Risky=65, Solid=80, High=95)
    - technical: average of technical/tactical self-ratings converted to 0-100
-   - tactical: average of tactical self-ratings + bonus if experienceLevel is Semi-Pro/Pro
+   - tactical: average of tactical self-ratings + bonus if experienceLevel includes Semi-Pro, Pro, or Intl Academy
    - market: average of outreach/video health (0-100)
 3. 'funnelAnalysis':
    - 'stage': determine based on coachesContacted/offers (Invisible, Outreach, Conversation, Evaluation, Closing)

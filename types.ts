@@ -68,7 +68,7 @@ export interface PlayerProfile {
   dateOfBirth: string; // YYYY-MM-DD for maturity calc
   citizenship: string[]; // Changed to array for multiple nationalities
   otherCitizenship?: string; // Manual input for "Other" citizenship
-  experienceLevel: ExperienceLevel; // New field for maturity/adult play
+  experienceLevel: ExperienceLevel[]; // Multi-select for maturity/adult play
   position: Position;
   secondaryPositions: Position[];
   dominantFoot: "Right" | "Left" | "Both";
