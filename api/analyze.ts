@@ -241,15 +241,8 @@ Map your calculated values from the steps above to these fields:
    - 'feedback': Short context string.
      * For Academics: "Your GPA qualifies you for X% of US college programs, though it may limit access to highly selective institutions." (Do NOT mention D1 specifically).
      * For Others: MANDATORY: If score >= 90, the feedback MUST explicitly state "suited for all divisions" or "well within all top collegiate benchmarks". Do NOT mention only D1.
-5. 'actionPlan': Create 5-7 specific, actionable tasks. MUST cover ALL relevant categories:
-   - VIDEO: If video_type is "None" or "Raw_Game_Footage", recommend creating/upgrading highlight reel (High impact, Next_30_Days)
-   - OUTREACH: If coaches_contacted < 200 or responses_received/coaches_contacted < 10%, recommend outreach strategy improvements
-   - ACADEMICS: If GPA < 3.0 or no test_score, recommend academic improvements
-   - PHYSICAL: Recommend specific physical development based on athletic_profile weaknesses
-   - EXPOSURE: If few exposure_events, recommend showcases/camps. Always recommend campus visits.
-   - RECRUITING: Strategy adjustments based on their funnel stage (e.g., follow-up timing, personalization)
-   Skip categories that don't apply (e.g., don't recommend video if they already have an edited reel AND strong responses).
-   - 'timeframe': "Next_30_Days", "Next_90_Days", or "Next_12_Months"
+5. 'actionPlan': Create specific tasks based on your 90 day plan logic.
+   - 'timeframe': "Next_30_Days" or "Next_90_Days"
    - 'impact': "High", "Medium", or "Low"
 6. 'coachShortEvaluation': Your brutally honest one sentence summary.
 7. 'plainLanguageSummary': A paragraph explaining their reality.
