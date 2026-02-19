@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Header from './components/Header';
-import PlayerInputForm from './components/PlayerInputForm';
+const PlayerInputForm = React.lazy(() => import('./components/PlayerInputForm'));
 const AnalysisResultView = React.lazy(() => import('./components/AnalysisResult'));
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
@@ -87,7 +87,10 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    return saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  });
   const [showMethodology, setShowMethodology] = useState(false);
 
   // Capture referral source from URL (e.g., ?ref=coach-smith)
@@ -96,26 +99,9 @@ const App: React.FC = () => {
     return params.get('ref') || null;
   });
 
-  // Initialize theme from localStorage or system preference
+  // Apply theme class when theme changes
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
-    } else {
-      setTheme('light');
-    }
-  }, []);
-
-  // Update HTML class when theme changes
-  useEffect(() => {
-    const html = document.documentElement;
-    if (theme === 'dark') {
-      html.classList.add('dark');
-    } else {
-      html.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme]);
 
@@ -199,8 +185,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden relative transition-colors duration-300">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 z-0 pointer-events-none print:hidden">
+      {/* Background Ambience — blur hidden on mobile (GPU-intensive) */}
+      <div className="fixed inset-0 z-0 pointer-events-none print:hidden hidden md:block">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-[120px]"></div>
       </div>
@@ -235,7 +221,15 @@ const App: React.FC = () => {
                </div>
              </div>
 
-             <PlayerInputForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+             <Suspense fallback={
+               <div className="space-y-6 animate-pulse">
+                 <div className="h-10 w-40 ml-auto bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                 <div className="h-[600px] bg-slate-200/60 dark:bg-slate-800/40 rounded-2xl"></div>
+                 <div className="h-48 bg-slate-200/60 dark:bg-slate-800/40 rounded-2xl"></div>
+               </div>
+             }>
+               <PlayerInputForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+             </Suspense>
 
              {/* Credibility Section */}
              <div className="mt-24 border-t border-slate-200 dark:border-white/5 pt-12">

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { AnalysisResult, RiskFlag, ActionItem, PlayerProfile, BenchmarkMetric } from '../types';
-import { supabase } from '../services/supabase';
+// supabase imported dynamically in handleEmailSubmit to reduce chunk size
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -367,6 +367,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
     e.preventDefault();
     setIsEmailSending(true);
     try {
+      const { supabase } = await import('../services/supabase');
       await supabase.from('website_leads').upsert({
         email: email,
         first_name: profile.firstName,

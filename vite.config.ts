@@ -18,6 +18,17 @@ export default defineConfig(() => {
           'react-dom/client': 'preact/compat',
           'react/jsx-runtime': 'preact/jsx-runtime',
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'vendor-preact': ['preact'],
+              'vendor-recharts': ['recharts'],
+              'vendor-supabase': ['@supabase/supabase-js'],
+            }
+          }
+        }
       }
     };
 });
