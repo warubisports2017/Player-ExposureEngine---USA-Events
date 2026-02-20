@@ -5,7 +5,7 @@ const PlayerInputForm = React.lazy(() => import('./components/PlayerInputForm'))
 const AnalysisResultView = React.lazy(() => import('./components/AnalysisResult'));
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
-import { GraduationCap, Users, ShieldCheck, X } from 'lucide-react';
+import { GraduationCap, Users, ShieldCheck, X, Globe, ArrowRight } from 'lucide-react';
 
 const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-fade-in print:hidden">
@@ -271,6 +271,19 @@ const App: React.FC = () => {
                     <span className="flex items-center"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2"></span>Built with College Coaches</span>
                     <span className="flex items-center"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2"></span>FIFA-Licensed Agents</span>
                     <span className="flex items-center"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2"></span>UEFA Licensed Educators</span>
+                </div>
+
+                <div className="mt-8 flex justify-center">
+                  <a
+                    href="https://warubi-sports.com/eliteplayer-pathways/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Explore Elite Pathways
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </a>
                 </div>
              </div>
 

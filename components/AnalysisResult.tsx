@@ -969,18 +969,18 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
       )}
 
       {/* MOBILE STICKY FOOTER CTA */}
-      <div className="no-print fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-emerald-500/20 md:hidden z-50 animate-slide-up shadow-2xl">
-        <a 
+      <div className="no-print fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-r from-emerald-600 to-emerald-500 backdrop-blur-md border-t border-emerald-400/30 md:hidden z-50 animate-slide-up shadow-2xl shadow-emerald-900/30">
+        <a
             href="https://warubi-sports.com/eliteplayer-pathways/"
-            target="_blank" 
+            target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between w-full px-4 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm shadow-xl"
+            className="flex items-center justify-between w-full px-4 py-3 bg-white/15 hover:bg-white/20 text-white rounded-xl font-bold text-sm backdrop-blur-sm border border-white/20"
         >
             <div className="flex items-center">
-              <Globe className="w-4 h-4 mr-2 text-emerald-500" />
+              <Globe className="w-4 h-4 mr-2" />
               <span>Elite Pathways</span>
             </div>
-            <div className="flex items-center text-emerald-500 dark:text-emerald-600">
+            <div className="flex items-center">
                Get Help <ArrowRight className="w-4 h-4 ml-1" />
             </div>
         </a>
