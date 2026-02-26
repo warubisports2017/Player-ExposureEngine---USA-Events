@@ -42,12 +42,19 @@ If they have multiple leagues in the latest year, pick the highest tier.
 B - Classify ability band
 Use both self assessment and role plus minutes.
 
-1 - Start from self ratings:
-- If most categories are Top 10% or Elite - start ability band as High.
+1 - Start from self ratings WITH league-tier cap:
+Self-assessment is unreliable without verification. Cap the effective self-rating based on league tier BEFORE computing ability band:
+- Elite tier (MLS NEXT, ECNL, GA): Self-ratings taken at face value.
+- High tier (ECNL RL, USYS NL, Elite 64): Cap any "Elite" self-rating down to "Top 10%" before evaluating.
+- Mid tier (NPL, regional): Cap any "Elite" to "Above Average" and "Top 10%" to "Above Average".
+- Low tier (local/HS): Cap any "Elite" or "Top 10%" to "Above Average" and "Above Average" to "Average".
+
+After applying the cap:
+- If most (capped) categories are Top 10% or Elite - start ability band as High.
 - If there is a mix of Above Average and Top 10% with few Below Average - start as Medium.
 - If most are Average or Below Average - start as Low.
 
-**CRITICAL VERIFICATION**: If the League Tier is 'Low' OR 'Mid' AND the player rates themselves 'Elite' or 'Top 10%', you MUST flag a "Verification Risk". The context of "Elite" in a local league is not "Elite" nationally.
+**CRITICAL VERIFICATION**: If the League Tier is 'Low' OR 'Mid' AND the player's ORIGINAL (uncapped) self-ratings are 'Elite' or 'Top 10%', you MUST flag a "Verification Risk". The context of "Elite" in a local league is not "Elite" nationally. Also flag for 'High' tier if ALL categories are rated 'Elite' — that level of self-assessment needs video proof.
 
 2 - Adjust for role and minutes:
 - If role is Key Starter and minutesPct is at least 70 percent - move ability up by one band (cap at High).
@@ -80,23 +87,32 @@ Girls have more total opportunity at every level. This is already reflected in t
 
 For boys, base visibility:
 Elite boys (MLS NEXT, ECNL Boys): D1: 75, D2: 85, D3: 60, NAIA: 85, JUCO: 95
-High boys (ECNL RL, USYS NL, Elite 64): D1: 35, D2: 60, D3: 65, NAIA: 70, JUCO: 80
-Mid boys (NPL, regional): D1: 15, D2: 35, D3: 60, NAIA: 55, JUCO: 65
+High boys (ECNL RL, USYS NL, Elite 64): D1: 15, D2: 60, D3: 65, NAIA: 70, JUCO: 80
+Mid boys (NPL, regional): D1: 8, D2: 35, D3: 60, NAIA: 55, JUCO: 65
 Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
 
 For girls, base visibility:
 Elite girls (ECNL, GA): D1: 88, D2: 93, D3: 68, NAIA: 88, JUCO: 97
-High girls (ECNL RL, USYS NL, Elite 64): D1: 48, D2: 68, D3: 73, NAIA: 78, JUCO: 88
-Mid girls (NPL, regional): D1: 20, D2: 40, D3: 68, NAIA: 60, JUCO: 70
+High girls (ECNL RL, USYS NL, Elite 64): D1: 20, D2: 68, D3: 73, NAIA: 78, JUCO: 88
+Mid girls (NPL, regional): D1: 10, D2: 40, D3: 68, NAIA: 60, JUCO: 70
 Low girls (local/HS): D1: 8, D2: 25, D3: 52, NAIA: 52, JUCO: 65
 
 E - Adjust scores for ability
 
 **Cascading Competency Rule (CRITICAL)**:
 If a player is qualified for D1/D2, they are automatically qualified for NAIA/JUCO athletically.
-- If ability band is High: D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
-- If ability band is Medium: No change.
-- If ability band is Low: D1: -20, D2: -15, D3: -10, NAIA: -5, JUCO: 0
+
+**IMPORTANT**: Ability bonuses scale by league tier. Self-assessed "High" ability in ECNL RL is NOT the same as verified "High" in MLS NEXT.
+
+If ability band is High:
+- Elite tier: D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
+- High tier: D1: +10, D2: +8, D3: +5, NAIA: +8, JUCO: +5
+- Mid tier: D1: +5, D2: +5, D3: +5, NAIA: +5, JUCO: +5
+- Low tier: D1: +3, D2: +3, D3: +3, NAIA: +3, JUCO: +3
+
+If ability band is Medium: No change.
+
+If ability band is Low: D1: -20, D2: -15, D3: -10, NAIA: -5, JUCO: 0
 
 F - Adjust scores for academics
 **Note on D3**: D3 is heavily academic. Even elite athletes drop significantly if GPA is low.
@@ -212,10 +228,10 @@ Map your calculated values from the steps above to these fields:
 
 1. 'visibilityScores': Use your calculated 'current_visibility' percentages for each level.
 2. 'readinessScore':
-   - athletic: map from your Ability Band (Low=40, Medium=75, High=95)
+   - athletic: map from your Ability Band (Low=40, Medium=75, High=95). Remember: Ability Band already reflects the league-tier cap from Step B.
    - academic: map from your Academic Band (Problem=40, Risky=65, Solid=80, High=95)
-   - technical: average of technical/tactical self-ratings converted to 0-100
-   - tactical: average of tactical self-ratings + bonus if experienceLevel includes Semi-Pro, Pro, or Intl Academy
+   - technical: average of CAPPED self-ratings (after league-tier cap from Step B1) converted to 0-100. Use the capped values, NOT the original self-assessment.
+   - tactical: average of CAPPED tactical self-ratings + bonus if experienceLevel includes Semi-Pro, Pro, or Intl Academy. Use the capped values.
    - market: average of outreach/video health (0-100)
 3. 'funnelAnalysis':
    - 'stage': determine based on coachesContacted/offers (Invisible, Outreach, Conversation, Evaluation, Closing)
