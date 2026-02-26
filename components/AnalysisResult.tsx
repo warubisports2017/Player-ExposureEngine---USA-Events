@@ -685,6 +685,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                                   <li><strong>Full Web (Big Shape):</strong> You are a universal recruit with options at all levels.</li>
                                   <li><strong>Dent in D3?</strong> Your athletic ability is high, but grades are limiting access.</li>
                                   <li><strong>High NAIA/JUCO?</strong> If you are D1 qualified, you automatically qualify for these levels, providing a strong safety net.</li>
+                                  <li><strong>Lower D3?</strong> D3 programs don't offer athletic scholarships and weigh academics heavily — strong athletes often score lower here than at D1/D2.</li>
                                 </ul>
                             </div>
                         )}

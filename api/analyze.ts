@@ -26,13 +26,15 @@ A - Classify league tier
 - **Handling 'Other'**: If the league is 'Other', verify 'otherLeagueName' or 'teamName'. If it sounds like a top academy, treat as 'Mid'. If unknown, treat as 'Low'.
 
 For boys:
-- Elite boys - MLS NEXT, ECNL Boys
+- Top Elite boys - MLS NEXT
+- Elite boys - ECNL Boys
 - High boys - ECNL Regional League, USYS National League, USYS Elite 64, USL Academy
 - Mid boys - NPL and strong regional or state premier leagues
 - Low boys - local travel leagues, house leagues, high school only
 
 For girls:
-- Elite girls - ECNL Girls, Girls Academy
+- Top Elite girls - ECNL Girls
+- Elite girls - Girls Academy
 - High girls - ECNL Regional League, USYS National League, USYS Elite 64, USL Academy
 - Mid girls - NPL and strong regional or state premier leagues
 - Low girls - local travel leagues, house leagues, high school only
@@ -44,7 +46,7 @@ Use both self assessment and role plus minutes.
 
 1 - Start from self ratings WITH league-tier cap:
 Self-assessment is unreliable without verification. Cap the effective self-rating based on league tier BEFORE computing ability band:
-- Elite tier (MLS NEXT, ECNL, GA): Self-ratings taken at face value.
+- Top Elite / Elite tier (MLS NEXT, ECNL, GA): Self-ratings taken at face value.
 - High tier (ECNL RL, USYS NL, Elite 64): Cap any "Elite" self-rating down to "Top 10%" before evaluating.
 - Mid tier (NPL, regional): Cap any "Elite" to "Above Average" and "Top 10%" to "Above Average".
 - Low tier (local/HS): Cap any "Elite" or "Top 10%" to "Above Average" and "Above Average" to "Average".
@@ -86,13 +88,15 @@ You will score each level on a 0 to 100 scale before market adjustments.
 Girls have more total opportunity at every level. This is already reflected in the higher base scores below.
 
 For boys, base visibility:
-Elite boys (MLS NEXT, ECNL Boys): D1: 75, D2: 85, D3: 60, NAIA: 85, JUCO: 95
+Top Elite boys (MLS NEXT): D1: 55, D2: 80, D3: 55, NAIA: 80, JUCO: 90
+Elite boys (ECNL Boys): D1: 42, D2: 72, D3: 55, NAIA: 75, JUCO: 88
 High boys (ECNL RL, USYS NL, Elite 64): D1: 15, D2: 60, D3: 65, NAIA: 70, JUCO: 80
 Mid boys (NPL, regional): D1: 8, D2: 35, D3: 60, NAIA: 55, JUCO: 65
 Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
 
 For girls, base visibility:
-Elite girls (ECNL, GA): D1: 88, D2: 93, D3: 68, NAIA: 88, JUCO: 97
+Top Elite girls (ECNL Girls): D1: 60, D2: 85, D3: 60, NAIA: 85, JUCO: 95
+Elite girls (Girls Academy): D1: 55, D2: 80, D3: 58, NAIA: 80, JUCO: 92
 High girls (ECNL RL, USYS NL, Elite 64): D1: 20, D2: 68, D3: 73, NAIA: 78, JUCO: 88
 Mid girls (NPL, regional): D1: 10, D2: 40, D3: 68, NAIA: 60, JUCO: 70
 Low girls (local/HS): D1: 8, D2: 25, D3: 52, NAIA: 52, JUCO: 65
@@ -105,7 +109,7 @@ If a player is qualified for D1/D2, they are automatically qualified for NAIA/JU
 **IMPORTANT**: Ability bonuses scale by league tier. Self-assessed "High" ability in ECNL RL is NOT the same as verified "High" in MLS NEXT.
 
 If ability band is High:
-- Elite tier: D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
+- Top Elite / Elite tier (MLS NEXT, ECNL, GA): D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
 - High tier: D1: +10, D2: +8, D3: +5, NAIA: +8, JUCO: +5
 - Mid tier: D1: +5, D2: +5, D3: +5, NAIA: +5, JUCO: +5
 - Low tier: D1: +3, D2: +3, D3: +3, NAIA: +3, JUCO: +3
@@ -126,7 +130,7 @@ G - Extra tweak for role and minutes
 
 - If role is Key Starter and minutesPct >= 80 percent: D1: +5, D2: +5
 - If role is Bench and minutesPct <= 20 percent:
-  - **Elite League Exception**: If League is 'Elite' (MLS NEXT/ECNL/GA), a 'Bench' role heavily penalizes D1 (-20) but ONLY slightly penalizes D2/D3 (-5). Reason: An MLS NEXT bench player is often a D2 starter.
+  - **Top Elite / Elite League Exception**: If League is Top Elite or Elite (MLS NEXT/ECNL/GA), a 'Bench' role heavily penalizes D1 (-20) but ONLY slightly penalizes D2/D3 (-5). Reason: An MLS NEXT bench player is often a D2 starter.
   - **All other leagues**: Bench role penalizes all levels (-10).
 
 G2 - Maturity & Experience Bonus (CRITICAL FACTOR)
@@ -188,7 +192,59 @@ As of 2025-26, NCAA D1 teams can offer up to 28 scholarships (roster limit) for 
    - For a boy in MLS NEXT: "Men's D1 is highly competitive with only ~205 programs. Your MLS NEXT experience puts you in the conversation, but you'll need video and outreach to stand out."
    - For a female GK: "Quality goalkeepers are the #1 recruiting need in women's college soccer. Your position alone opens doors that field players don't have."
 
-After all adjustments, clamp each level score between 0 and 100. Call this "on_paper_fit".
+G4 - Honors & Awards Bonus
+Check the 'honors' field from the player's season entries. Classify the HIGHEST honor:
+- Tier A: All-America, National Best XI, National Player of the Year
+- Tier B: All-Conference, All-Region, 1st Team All-[anything], Conference Player of the Year
+- Tier C: Team MVP, Tournament Best XI, 2nd Team All-Conference, other named awards
+
+Apply the SINGLE highest honor bonus scaled by league tier:
+
+Tier A (All-America):
+- Top Elite (MLS NEXT): D1: +15, D2: +10, D3: +3, NAIA: +5
+- Elite (ECNL, GA): D1: +10, D2: +8, D3: +3, NAIA: +5
+- High (ECNL RL, USYS NL): D1: +5, D2: +5, D3: +3, NAIA: +3
+- Mid / Low: D1: +2, D2: +2, D3: +2, NAIA: +2
+
+Tier B (All-Conference/Region):
+- Top Elite (MLS NEXT): D1: +10, D2: +8, D3: +2, NAIA: +3
+- Elite (ECNL, GA): D1: +8, D2: +5, D3: +2, NAIA: +3
+- High (ECNL RL, USYS NL): D1: +3, D2: +3, D3: +2, NAIA: +2
+- Mid / Low: D1: +1, D2: +1, D3: +1, NAIA: +1
+
+Tier C (MVP/Other):
+- Top Elite (MLS NEXT): D1: +5, D2: +3, D3: +1, NAIA: +2
+- Elite (ECNL, GA): D1: +3, D2: +2, D3: +1, NAIA: +2
+- High (ECNL RL, USYS NL): D1: +2, D2: +2, D3: +1, NAIA: +1
+- Mid / Low: D1: +1, D2: +1, D3: +1, NAIA: +1
+
+Only count the single highest honor — do NOT stack multiple honors.
+If honors field is empty or blank, skip this step.
+
+G5 - Height & Position Adjustment
+Parse the player's height. Apply adjustments ONLY for positions where height is a significant D1/D2 factor.
+
+For male players:
+- GK below 6'0": D1: -5, D2: -3. GK below 5'9": D1: -10, D2: -5. GK 6'3" or above: D1: +3.
+- CB below 5'11": D1: -3, D2: -2. CB below 5'8": D1: -8, D2: -5. CB 6'2" or above: D1: +3.
+- ST below 5'10": D1: -2. ST below 5'7": D1: -5.
+- All other positions (fullbacks, midfielders, wingers): No height adjustment.
+
+For female players:
+- GK below 5'8": D1: -5, D2: -3. GK 5'11" or above: D1: +3.
+- CB below 5'7": D1: -3, D2: -2. CB 5'10" or above: D1: +3.
+- All other positions: No height adjustment.
+
+If height is missing or not provided, skip this step entirely (do not penalize).
+
+D1 HARD CAP (CRITICAL):
+After ALL bonus steps (D through G5), apply a hard cap on D1:
+- If offersReceived >= 3: D1 cap = 100 (no cap)
+- If offersReceived >= 1: D1 cap = 96
+- Otherwise: D1 cap = 92
+If D1 score exceeds the cap, clamp it down. This ensures no player reaches D1 near-100 without actual offers from coaches.
+
+After all adjustments and the D1 cap, clamp each level score between 0 and 100. Call this "on_paper_fit".
 
 H - Apply video and outreach multipliers
 
@@ -197,9 +253,10 @@ H - Apply video and outreach multipliers
 - If videoType is "Raw_Game_Footage": 0.8 (Good, but needs editing)
 - If videoType is "None": 0.6 (Massive penalty)
 
-2 - Outreach multiplier:
+2 - Outreach multiplier (check from top to bottom, first match wins):
 - If coachesContacted == 0: tag "Invisible", multiplier 0.7
 - Else if coachesContacted >= 20 and response rate < 5 percent: tag "Spamming", multiplier 0.8
+- Else if coachesContacted >= 10 and response rate < 20 percent and offersReceived == 0: tag "Low Traction", multiplier 0.85
 - Else if coachesResponded >= 5 and offersReceived == 0: tag "Talent Gap", multiplier 0.9
 - Else: multiplier 1.0
 
@@ -232,7 +289,7 @@ Map your calculated values from the steps above to these fields:
    - academic: map from your Academic Band (Problem=40, Risky=65, Solid=80, High=95)
    - technical: average of CAPPED self-ratings (after league-tier cap from Step B1) converted to 0-100. Use the capped values, NOT the original self-assessment.
    - tactical: average of CAPPED tactical self-ratings + bonus if experienceLevel includes Semi-Pro, Pro, or Intl Academy. Use the capped values.
-   - market: average of outreach/video health (0-100)
+   - market: output 0 (this will be computed deterministically client-side)
 3. 'funnelAnalysis':
    - 'stage': determine based on coachesContacted/offers (Invisible, Outreach, Conversation, Evaluation, Closing)
    - 'conversionRate': "X% Reply Rate"
@@ -242,7 +299,7 @@ Map your calculated values from the steps above to these fields:
    - 'category': Create 3 entries: "Physical", "Soccer Resume", "Academics"
    - 'userScore': Calculate independent 0-100 scores for each category.
      * "Physical": Map from Ability Band (High=92, Med=75, Low=60).
-     * "Soccer Resume": Map from League Tier (Elite=95, High=80, Mid=65, Low=45).
+     * "Soccer Resume": Map from League Tier (Top Elite=95, Elite=90, High=80, Mid=65, Low=45).
      * "Academics": Map GPA to "Market Access Percentage" (University Access).
        * 4.0 GPA = 100%
        * 3.5 GPA = 85%

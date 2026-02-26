@@ -7,12 +7,41 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 // League tier for verified readiness calculation
+// MLS_NEXT and ECNL/GA are both tier 4 for verified readiness (self-assessment credibility)
+// The base score differentiation happens in the API prompt, not here
 const LEAGUE_TIER: Record<YouthLeague, number> = {
   MLS_NEXT: 4, ECNL: 4, Girls_Academy: 4,
   ECNL_RL: 3, USYS_National_League: 3,
   Elite_Local: 2,
   High_School: 1, Other: 1,
 };
+
+// Deterministic market readiness computation (replaces LLM guess)
+function computeMarketReadiness(profile: PlayerProfile): number {
+  const videoScore = profile.videoType === 'Edited_Highlight_Reel' ? 90
+    : profile.videoType === 'Raw_Game_Footage' ? 55 : 15;
+
+  const contacts = profile.coachesContacted || 0;
+  const responses = profile.responsesReceived || 0;
+  const offers = profile.offersReceived || 0;
+
+  // Volume: 50 contacts = 100 (full marks)
+  const contactScore = Math.min(contacts / 50, 1) * 100;
+
+  // Response quality: 25% response rate = 100 (full marks)
+  const responseRate = contacts > 0 ? responses / contacts : 0;
+  const responseScore = Math.min(responseRate * 4, 1) * 100;
+
+  // Offers: 3 offers = 100 (full marks)
+  const offerScore = Math.min(offers / 3, 1) * 100;
+
+  return Math.round(
+    videoScore * 0.30 +
+    contactScore * 0.25 +
+    responseScore * 0.25 +
+    offerScore * 0.20
+  );
+}
 
 const TIER_MULTIPLIER: Record<number, number> = {
   4: 1.0,   // Elite: face value
@@ -140,6 +169,9 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
   if (result.visibilityScores.length < 5) {
     throw new Error("Incomplete visibility scores");
   }
+
+  // Override market readiness with deterministic computation (not LLM-guessed)
+  result.readinessScore.market = computeMarketReadiness(profile);
 
   // Compute verified readiness scores (deterministic, not LLM-dependent)
   const { verified, gapFactors } = computeVerifiedReadiness(profile, result.readinessScore);
