@@ -932,21 +932,15 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                   const raw = e.target.value;
                   // Allow empty, digits, and one decimal point while typing
                   if (raw === '' || /^\d*\.?\d{0,2}$/.test(raw)) {
-                    const num = parseFloat(raw);
-                    if (raw === '' || raw === '.' || raw.endsWith('.') || raw.endsWith('.0') || raw.endsWith('.00')) {
-                      // Preserve intermediate typing states as string
-                      handleAcademicChange('gpa', raw);
-                    } else if (!isNaN(num) && num <= 4.0) {
-                      handleAcademicChange('gpa', raw);
-                    }
+                    handleAcademicChange('gpa', raw);
                   }
                 }}
                 onBlur={(e) => {
-                  // On blur, normalize to a clean number
+                  // On blur, clamp to 0-4.0 range and normalize
                   const num = parseFloat(e.target.value);
-                  if (!isNaN(num) && num >= 0 && num <= 4.0) {
-                    handleAcademicChange('gpa', num);
-                  } else if (e.target.value === '' || isNaN(num)) {
+                  if (!isNaN(num)) {
+                    handleAcademicChange('gpa', Math.min(num, 4.0));
+                  } else {
                     handleAcademicChange('gpa', '');
                   }
                 }}
