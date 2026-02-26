@@ -134,9 +134,25 @@ export interface BenchmarkMetric {
   feedback: string; // Short explanation
 }
 
+export interface VerifiedReadiness {
+  athletic: number;
+  technical: number;
+  tactical: number;
+}
+
+export interface GapFactors {
+  video: boolean;    // No video or raw only
+  league: boolean;   // Below Elite tier
+  outreach: boolean; // Low outreach volume
+  videoLabel: string;
+  leagueLabel: string;
+}
+
 export interface AnalysisResult {
   visibilityScores: VisibilityScore[];
   readinessScore: ReadinessScore;
+  verifiedReadiness?: VerifiedReadiness;
+  gapFactors?: GapFactors;
   keyStrengths: string[];
   keyRisks: RiskFlag[];
   actionPlan: ActionItem[];

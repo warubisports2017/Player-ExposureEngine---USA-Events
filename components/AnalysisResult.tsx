@@ -75,6 +75,8 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
   const readinessScore = result.readinessScore || {
     athletic: 50, technical: 50, tactical: 50, academic: 50, market: 50
   };
+  const verifiedReadiness = result.verifiedReadiness;
+  const gapFactors = result.gapFactors;
 
   // Helper to normalize level names (e.g. "NCAA D1" -> "D1") for consistent sorting and mapping
   const normalizeLevel = (level: string) => {
@@ -548,15 +550,17 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
              
              <div className="pillars-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { label: "Physical", score: readinessScore.athletic, icon: Dumbbell },
-                  { label: "Technical", score: readinessScore.technical, icon: Activity },
-                  { label: "Tactical", score: readinessScore.tactical, icon: Brain },
-                  { label: "Exposure", score: readinessScore.market, icon: Video },
-                  { label: "Academics", score: readinessScore.academic, icon: BookOpen }
+                  { label: "Physical", score: readinessScore.athletic, verified: verifiedReadiness?.athletic, icon: Dumbbell, hasVerified: true },
+                  { label: "Technical", score: readinessScore.technical, verified: verifiedReadiness?.technical, icon: Activity, hasVerified: true },
+                  { label: "Tactical", score: readinessScore.tactical, verified: verifiedReadiness?.tactical, icon: Brain, hasVerified: true },
+                  { label: "Exposure", score: readinessScore.market, verified: undefined, icon: Video, hasVerified: false },
+                  { label: "Academics", score: readinessScore.academic, verified: undefined, icon: BookOpen, hasVerified: false }
                 ].map((item, idx) => {
                    const context = getReadinessContext(item.label, item.score);
                    const Icon = item.icon;
-                   
+                   const gap = item.hasVerified && item.verified != null ? item.score - item.verified : 0;
+                   const showVerified = item.hasVerified && item.verified != null && gap > 10;
+
                    return (
                      <div key={idx} className="pillar-card bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                         <div className="flex justify-between items-start mb-3">
@@ -574,29 +578,88 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                               {context.status}
                            </span>
                         </div>
-                        
-                        <div className="mb-3">
+
+                        {/* Self-assessed score */}
+                        <div className="mb-2">
                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-slate-400">Readiness Score</span>
+                              <span className="text-slate-400">{showVerified ? 'Your Rating' : 'Readiness Score'}</span>
                               <span className={`font-mono font-bold ${context.color}`}>{item.score}/100</span>
                            </div>
                            <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 className={`h-full rounded-full transition-all duration-1000 ${
                                    item.score >= 90 ? 'bg-emerald-500' : item.score >= 70 ? 'bg-blue-500' : 'bg-amber-500'
-                                }`} 
+                                }`}
                                 style={{ width: `${item.score}%` }}
                               ></div>
                            </div>
                         </div>
-                        
+
+                        {/* Verified score (only for Physical/Technical/Tactical with gap > 10) */}
+                        {showVerified && (
+                          <div className="mb-2">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-slate-400">Verified Level</span>
+                              <span className="font-mono font-bold text-slate-400 dark:text-slate-500">{item.verified}/100</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-1000 bg-slate-400 dark:bg-slate-600"
+                                style={{ width: `${item.verified}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug min-h-[2.5em]">
-                           {context.tip}
+                           {showVerified
+                             ? `Gap of ${gap} pts — close it with video and higher competition.`
+                             : context.tip}
                         </p>
                      </div>
                    );
                 })}
              </div>
+
+             {/* Verification Gap Callout */}
+             {verifiedReadiness && gapFactors && (() => {
+               const avgSelf = (readinessScore.athletic + readinessScore.technical + readinessScore.tactical) / 3;
+               const avgVerified = (verifiedReadiness.athletic + verifiedReadiness.technical + verifiedReadiness.tactical) / 3;
+               const avgGap = avgSelf - avgVerified;
+               if (avgGap <= 15) return null;
+
+               return (
+                 <div className="mt-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 print:bg-amber-50 print:border-amber-200">
+                   <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center mb-2">
+                     <Zap className="w-4 h-4 mr-1.5" />
+                     Verification Gap
+                   </h4>
+                   <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
+                     Your self-assessed abilities are strong — but coaches can't fully verify them yet. Here's what's holding you back:
+                   </p>
+                   <div className="space-y-2">
+                     {gapFactors.video && gapFactors.videoLabel && (
+                       <div className="flex items-start text-xs text-amber-700 dark:text-amber-400">
+                         <Video className="w-3.5 h-3.5 mr-2 mt-0.5 flex-shrink-0" />
+                         <span>{gapFactors.videoLabel} <span className="font-semibold">(+40% verification boost)</span></span>
+                       </div>
+                     )}
+                     {gapFactors.league && gapFactors.leagueLabel && (
+                       <div className="flex items-start text-xs text-amber-700 dark:text-amber-400">
+                         <Trophy className="w-3.5 h-3.5 mr-2 mt-0.5 flex-shrink-0" />
+                         <span>Your league is {gapFactors.leagueLabel} <span className="font-semibold">(+25% verification boost)</span></span>
+                       </div>
+                     )}
+                     {gapFactors.outreach && (
+                       <div className="flex items-start text-xs text-amber-700 dark:text-amber-400">
+                         <Mail className="w-3.5 h-3.5 mr-2 mt-0.5 flex-shrink-0" />
+                         <span>Limited coach outreach — target 50-75 coaches for your level <span className="font-semibold">(increases market visibility)</span></span>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               );
+             })()}
           </div>
 
           {/* Radar Chart: Visibility Profile & Probability Grid */}

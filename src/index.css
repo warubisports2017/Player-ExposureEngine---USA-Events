@@ -328,7 +328,8 @@ input[type=range]::-webkit-slider-runnable-track {
     overflow: visible !important;
   }
 
-  .pillar-card .mb-3 {
+  .pillar-card .mb-3,
+  .pillar-card .mb-2 {
     margin-bottom: 0.1rem !important;
   }
 

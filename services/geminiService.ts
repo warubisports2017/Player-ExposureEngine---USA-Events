@@ -1,9 +1,74 @@
-import { PlayerProfile, AnalysisResult } from "../types";
+import { PlayerProfile, AnalysisResult, VerifiedReadiness, GapFactors, YouthLeague } from "../types";
 
 const LEVELS = ["D1", "D2", "D3", "NAIA", "JUCO"] as const;
 
 function clamp(val: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, val));
+}
+
+// League tier for verified readiness calculation
+const LEAGUE_TIER: Record<YouthLeague, number> = {
+  MLS_NEXT: 4, ECNL: 4, Girls_Academy: 4,
+  ECNL_RL: 3, USYS_National_League: 3,
+  Elite_Local: 2,
+  High_School: 1, Other: 1,
+};
+
+const TIER_MULTIPLIER: Record<number, number> = {
+  4: 1.0,   // Elite: face value
+  3: 0.75,  // High: unverified at top level
+  2: 0.6,   // Mid
+  1: 0.5,   // Low
+};
+
+const TIER_LABEL: Record<number, string> = {
+  4: '',
+  3: 'competitive but one tier below national showcase leagues',
+  2: 'a regional league — limited national exposure',
+  1: 'a local league — unverified at any competitive level',
+};
+
+const VIDEO_MULTIPLIER: Record<string, number> = {
+  Edited_Highlight_Reel: 1.0,
+  Raw_Game_Footage: 0.85,
+  None: 0.6,
+};
+
+function computeVerifiedReadiness(profile: PlayerProfile, readiness: { athletic: number; technical: number; tactical: number }): { verified: VerifiedReadiness; gapFactors: GapFactors } {
+  // Get highest league tier from latest season
+  const latestSeason = profile.seasons.length > 0
+    ? profile.seasons.reduce((a, b) => b.year >= a.year ? b : a)
+    : null;
+
+  let highestTier = 1;
+  if (latestSeason) {
+    for (const league of latestSeason.league) {
+      highestTier = Math.max(highestTier, LEAGUE_TIER[league] || 1);
+    }
+  }
+
+  const leagueMult = TIER_MULTIPLIER[highestTier] ?? 0.5;
+  const videoMult = VIDEO_MULTIPLIER[profile.videoType] ?? 0.6;
+
+  const verified: VerifiedReadiness = {
+    athletic: Math.round(readiness.athletic * leagueMult * videoMult),
+    technical: Math.round(readiness.technical * leagueMult * videoMult),
+    tactical: Math.round(readiness.tactical * leagueMult * videoMult),
+  };
+
+  const gapFactors: GapFactors = {
+    video: profile.videoType !== 'Edited_Highlight_Reel',
+    league: highestTier < 4,
+    outreach: profile.coachesContacted < 30,
+    videoLabel: profile.videoType === 'None'
+      ? 'No highlight video — coaches cannot evaluate your abilities'
+      : profile.videoType === 'Raw_Game_Footage'
+        ? 'Raw footage only — an edited highlight reel increases coach engagement'
+        : '',
+    leagueLabel: TIER_LABEL[highestTier] || '',
+  };
+
+  return { verified, gapFactors };
 }
 
 function validateAndNormalize(raw: any): AnalysisResult {
@@ -75,6 +140,11 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
   if (result.visibilityScores.length < 5) {
     throw new Error("Incomplete visibility scores");
   }
+
+  // Compute verified readiness scores (deterministic, not LLM-dependent)
+  const { verified, gapFactors } = computeVerifiedReadiness(profile, result.readinessScore);
+  result.verifiedReadiness = verified;
+  result.gapFactors = gapFactors;
 
   return result;
 };
