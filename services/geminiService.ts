@@ -43,6 +43,94 @@ function computeMarketReadiness(profile: PlayerProfile): number {
   );
 }
 
+// --- Visibility floor enforcement (prevents LLM from underscoring) ---
+
+// 5-tier scoring for visibility bases (MLS NEXT vs ECNL split)
+function getVisibilityTier(profile: PlayerProfile): number {
+  const latestSeason = profile.seasons.length > 0
+    ? profile.seasons.reduce((a, b) => b.year >= a.year ? b : a)
+    : null;
+  if (!latestSeason) return 1;
+
+  const isMale = profile.gender === 'Male';
+  let highest = 1;
+  for (const league of latestSeason.league) {
+    let t = 1;
+    if (isMale) {
+      if (league === 'MLS_NEXT') t = 5;
+      else if (league === 'ECNL') t = 4;
+      else if (league === 'ECNL_RL' || league === 'USYS_National_League') t = 3;
+      else if (league === 'Elite_Local') t = 2;
+    } else {
+      if (league === 'ECNL') t = 5;
+      else if (league === 'Girls_Academy') t = 4;
+      else if (league === 'ECNL_RL' || league === 'USYS_National_League') t = 3;
+      else if (league === 'Elite_Local') t = 2;
+    }
+    highest = Math.max(highest, t);
+  }
+  return highest;
+}
+
+// Base visibility scores [D1, D2, D3, NAIA, JUCO] — must match api/analyze.ts prompt
+const BASE_BOYS: Record<number, number[]> = {
+  5: [55, 80, 55, 80, 90],  // MLS NEXT
+  4: [42, 72, 55, 75, 88],  // ECNL
+  3: [15, 60, 65, 70, 80],  // High (ECNL RL, USYS NL)
+  2: [8, 35, 60, 55, 65],   // Mid
+  1: [5, 20, 40, 45, 60],   // Low
+};
+const BASE_GIRLS: Record<number, number[]> = {
+  5: [60, 85, 60, 85, 95],  // ECNL
+  4: [55, 80, 58, 80, 92],  // GA
+  3: [20, 68, 73, 78, 88],  // High
+  2: [10, 40, 68, 60, 70],  // Mid
+  1: [8, 25, 52, 52, 65],   // Low
+};
+
+// Outreach multiplier — mirrors api/analyze.ts Step H
+function getOutreachMultiplier(profile: PlayerProfile): number {
+  const contacts = profile.coachesContacted || 0;
+  const responses = profile.responsesReceived || 0;
+  const offers = profile.offersReceived || 0;
+  const rate = contacts > 0 ? responses / contacts : 0;
+
+  if (contacts === 0) return 0.7;
+  if (contacts >= 20 && rate < 0.05) return 0.8;
+  if (contacts >= 10 && rate < 0.20 && offers === 0) return 0.85;
+  if (responses >= 5 && offers === 0) return 0.9;
+  return 1.0;
+}
+
+// Video multiplier for visibility — mirrors api/analyze.ts Step H
+const VIS_VIDEO_MULT: Record<string, number> = {
+  Edited_Highlight_Reel: 1.0,
+  Raw_Game_Footage: 0.8,
+  None: 0.6,
+};
+
+// Enforce: LLM score >= base × video × outreach for each level
+function enforceVisibilityFloors(profile: PlayerProfile, result: AnalysisResult): void {
+  const tier = getVisibilityTier(profile);
+  const bases = profile.gender === 'Male' ? BASE_BOYS[tier] : BASE_GIRLS[tier];
+  if (!bases) return;
+
+  const vMult = VIS_VIDEO_MULT[profile.videoType] ?? 0.6;
+  const oMult = getOutreachMultiplier(profile);
+  const levels = ['D1', 'D2', 'D3', 'NAIA', 'JUCO'];
+
+  for (const vis of result.visibilityScores) {
+    const idx = levels.indexOf(vis.level);
+    if (idx === -1) continue;
+    const floor = Math.round(bases[idx] * vMult * oMult);
+    if (vis.visibilityPercent < floor) {
+      vis.visibilityPercent = floor;
+    }
+  }
+}
+
+// --- Verified readiness (separate from visibility) ---
+
 const TIER_MULTIPLIER: Record<number, number> = {
   4: 1.0,   // Elite: face value
   3: 0.75,  // High: unverified at top level
@@ -169,6 +257,9 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
   if (result.visibilityScores.length < 5) {
     throw new Error("Incomplete visibility scores");
   }
+
+  // Enforce visibility score floors (LLM often underestimates NAIA/JUCO/D3)
+  enforceVisibilityFloors(profile, result);
 
   // Override market readiness with deterministic computation (not LLM-guessed)
   result.readinessScore.market = computeMarketReadiness(profile);
