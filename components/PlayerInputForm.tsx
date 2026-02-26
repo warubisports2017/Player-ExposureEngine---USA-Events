@@ -501,7 +501,16 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(profile);
+    // Ensure GPA is a clean number on submit
+    const gpaNum = parseFloat(String(profile.academics.gpa));
+    const cleanProfile = {
+      ...profile,
+      academics: {
+        ...profile.academics,
+        gpa: !isNaN(gpaNum) ? gpaNum : 0,
+      },
+    };
+    onSubmit(cleanProfile);
   };
 
   // Calculate CM for display
@@ -914,13 +923,34 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
             <Label>GPA (Unweighted)</Label>
             <div className="relative">
               <input
-                type="number"
-                step="0.01"
-                max="4.0"
+                type="text"
+                inputMode="decimal"
                 required
                 className={`${inputClass} font-mono pl-3`}
-                value={isNaN(profile.academics.gpa) ? '' : profile.academics.gpa}
-                onChange={(e) => handleAcademicChange('gpa', parseFloat(e.target.value))}
+                value={profile.academics.gpa === 0 || isNaN(profile.academics.gpa) ? '' : profile.academics.gpa}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  // Allow empty, digits, and one decimal point while typing
+                  if (raw === '' || /^\d*\.?\d{0,2}$/.test(raw)) {
+                    const num = parseFloat(raw);
+                    if (raw === '' || raw === '.' || raw.endsWith('.') || raw.endsWith('.0') || raw.endsWith('.00')) {
+                      // Preserve intermediate typing states as string
+                      handleAcademicChange('gpa', raw);
+                    } else if (!isNaN(num) && num <= 4.0) {
+                      handleAcademicChange('gpa', raw);
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  // On blur, normalize to a clean number
+                  const num = parseFloat(e.target.value);
+                  if (!isNaN(num) && num >= 0 && num <= 4.0) {
+                    handleAcademicChange('gpa', num);
+                  } else if (e.target.value === '' || isNaN(num)) {
+                    handleAcademicChange('gpa', '');
+                  }
+                }}
+                placeholder="e.g. 3.5"
               />
             </div>
           </div>
