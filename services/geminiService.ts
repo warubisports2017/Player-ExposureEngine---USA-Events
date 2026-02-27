@@ -129,6 +129,23 @@ function enforceVisibilityFloors(profile: PlayerProfile, result: AnalysisResult)
   }
 }
 
+// --- Monotonic ordering: JUCO >= NAIA >= D2 (D3/D1 independent) ---
+
+function enforceMonotonicOrdering(result: AnalysisResult): void {
+  const get = (level: string) => result.visibilityScores.find(v => v.level === level);
+  const d2 = get('D2'), naia = get('NAIA'), juco = get('JUCO');
+  if (!d2 || !naia || !juco) return;
+
+  // NAIA should be >= D2
+  if (naia.visibilityPercent < d2.visibilityPercent) {
+    naia.visibilityPercent = d2.visibilityPercent;
+  }
+  // JUCO should be >= NAIA
+  if (juco.visibilityPercent < naia.visibilityPercent) {
+    juco.visibilityPercent = naia.visibilityPercent;
+  }
+}
+
 // --- Verified readiness (separate from visibility) ---
 
 const TIER_MULTIPLIER: Record<number, number> = {
@@ -260,6 +277,9 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
 
   // Enforce visibility score floors (LLM often underestimates NAIA/JUCO/D3)
   enforceVisibilityFloors(profile, result);
+
+  // Enforce monotonic ordering: JUCO >= NAIA >= D2 (D3 is independent, D1 is independent)
+  enforceMonotonicOrdering(result);
 
   // Override market readiness with deterministic computation (not LLM-guessed)
   result.readinessScore.market = computeMarketReadiness(profile);

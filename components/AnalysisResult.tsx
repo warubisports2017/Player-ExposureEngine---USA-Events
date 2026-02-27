@@ -178,10 +178,10 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
   // Helper for Probability Status
   const getProbabilityStatus = (score: number) => {
-    if (score < 25) return { label: 'very low', color: '#ef4444', textClass: 'text-red-500' };
-    if (score < 50) return { label: 'low', color: '#f97316', textClass: 'text-orange-500' };
-    if (score < 75) return { label: 'medium', color: '#eab308', textClass: 'text-yellow-600 dark:text-yellow-500' };
-    return { label: 'high', color: '#10b981', textClass: 'text-emerald-600 dark:text-emerald-500' };
+    if (score < 25) return { label: 'Off the Radar', color: '#ef4444', textClass: 'text-red-500' };
+    if (score < 50) return { label: 'Limited Reach', color: '#f97316', textClass: 'text-orange-500' };
+    if (score < 75) return { label: 'Building', color: '#eab308', textClass: 'text-yellow-600 dark:text-yellow-500' };
+    return { label: 'On Their Radar', color: '#10b981', textClass: 'text-emerald-600 dark:text-emerald-500' };
   };
   
   // Helper to format citizenship list
@@ -666,10 +666,13 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
           <div data-pdf-section className="lg:col-span-2 bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl flex flex-col justify-between print:shadow-none print:border-slate-300 print:bg-white">
               <div>
                 <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
-                       <Eye className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
-                       Visibility Profile
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
+                         <Eye className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
+                         Visibility Profile
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-1 ml-7">How much of the recruiting pipeline you've completed at each level — not a recruitment probability.</p>
+                    </div>
                     <div className="relative no-print">
                         <button
                             onMouseEnter={() => setShowVisibilityInfo(true)}
@@ -679,13 +682,15 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                             <Info className="w-4 h-4" />
                         </button>
                         {showVisibilityInfo && (
-                            <div className="absolute right-0 top-6 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl z-50 animate-fade-in border border-slate-700">
-                                <h4 className="font-bold mb-2">How to interpret your shape:</h4>
+                            <div className="absolute right-0 top-6 w-72 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl z-50 animate-fade-in border border-slate-700">
+                                <h4 className="font-bold mb-2">What this score measures:</h4>
+                                <p className="mb-2 text-slate-300">Each percentage reflects how much of what coaches at that level look for — league exposure, video, outreach, stats, academics — your profile currently covers.</p>
+                                <h4 className="font-bold mb-2">Reading the shape:</h4>
                                 <ul className="space-y-1.5 list-disc pl-3">
-                                  <li><strong>Full Web (Big Shape):</strong> You are a universal recruit with options at all levels.</li>
-                                  <li><strong>Dent in D3?</strong> Your athletic ability is high, but grades are limiting access.</li>
-                                  <li><strong>High NAIA/JUCO?</strong> If you are D1 qualified, you automatically qualify for these levels, providing a strong safety net.</li>
-                                  <li><strong>Lower D3?</strong> D3 programs don't offer athletic scholarships and weigh academics heavily — strong athletes often score lower here than at D1/D2.</li>
+                                  <li><strong>Full Web:</strong> Universal recruit with options at all levels.</li>
+                                  <li><strong>Dent in D3?</strong> Athletic ability is high, but grades may be limiting.</li>
+                                  <li><strong>High NAIA/JUCO?</strong> Strong safety net — you qualify at these levels.</li>
+                                  <li><strong>Low D1?</strong> Focus on league exposure, video quality, and direct outreach.</li>
                                 </ul>
                             </div>
                         )}

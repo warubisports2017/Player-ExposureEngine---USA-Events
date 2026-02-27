@@ -59,6 +59,7 @@ After applying the cap:
 **CRITICAL VERIFICATION**: If the League Tier is 'Low' OR 'Mid' AND the player's ORIGINAL (uncapped) self-ratings are 'Elite' or 'Top 10%', you MUST flag a "Verification Risk". The context of "Elite" in a local league is not "Elite" nationally. Also flag for 'High' tier if ALL categories are rated 'Elite' — that level of self-assessment needs video proof.
 
 2 - Adjust for role and minutes:
+IMPORTANT: If gamesPlayed is 0 for ALL seasons, skip this role/minutes adjustment entirely. Zero games means no verified playing data — do not upgrade or downgrade ability based on an unverified role selection.
 - If role is Key Starter and minutesPct is at least 70 percent - move ability up by one band (cap at High).
 - If role is Bench or minutesPct is 30 percent or less - move ability down by one band (cap at Low).
 
@@ -127,6 +128,7 @@ Risky: D1: -10, D2: -5, D3: -20 (Major D3 Penalty), NAIA: +5, JUCO: +5
 Problem: D1: -25, D2: -20, D3: -40 (Critical D3 Penalty), NAIA: +0, JUCO: +20
 
 G - Extra tweak for role and minutes
+IMPORTANT: If gamesPlayed is 0 for the latest season, skip this step entirely. A "Key Starter" with zero games played has no verified data to justify a role bonus.
 
 - If role is Key Starter and minutesPct >= 80 percent: D1: +5, D2: +5
 - If role is Bench and minutesPct <= 20 percent:
@@ -142,6 +144,12 @@ The 'experienceLevel' field is now an ARRAY (select-all-that-apply).
    - If player > 18.5 years old: +5 to D1/D2/NAIA ("College Body" potential)
 
 2. Experience Factor (check ALL values in 'experienceLevel' array):
+   IMPORTANT: Scale experience bonuses by age (from dateOfBirth):
+   - Under 16: apply at 25% (round down). Coaches cannot recruit yet — experience is a positive signal but has no immediate recruiting impact.
+   - Age 16: apply at 50%. Entering the recruiting window — coaches are starting to evaluate.
+   - Age 17: apply at 75%. Peak scouting age — experience carries real weight.
+   - Age 18+: apply at 100%. Full value — directly demonstrates college readiness.
+   Example: Semi-Pro (Tier 2 = D1:+12) → age 15 gets D1:+3, age 16 gets D1:+6, age 17 gets D1:+9, age 18 gets D1:+12.
    Apply the HIGHEST applicable tier:
    - Tier 1 — "Pro_Academy_Reserve": D1 +15, D2 +15, D3 +5, NAIA +10, JUCO +5
    - Tier 2 — "Semi_Pro_UPSL_NPSL_WPSL" OR "International_Academy_U19": D1 +12, D2 +12, D3 +5, NAIA +8, JUCO +5
@@ -177,7 +185,8 @@ As of 2025-26, NCAA D1 teams can offer up to 28 scholarships (roster limit) for 
    - If female AND 4+ years from graduation: no penalty (still developing, but flag "Build your profile now")
    - If female AND within 1 year of graduation: -5 D1/D2 (window closing, urgency critical)
    - If male AND within 1-2 years of graduation: +5 to D1/D2 (entering peak window)
-   - If male AND 3+ years from graduation: no adjustment (normal timeline)
+   - If male AND 3 years from graduation: -5 D1, -3 D2 (early in timeline, limited coach attention)
+   - If male AND 4+ years from graduation: -10 D1, -5 D2, -3 NAIA (coaches are not recruiting yet)
 
 2. Position Scarcity (Gender-Differentiated):
    Goalkeeper is the most difficult position to recruit at the college level, especially in women's soccer.
