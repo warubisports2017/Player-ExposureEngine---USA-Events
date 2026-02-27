@@ -6,6 +6,7 @@ const AnalysisResultView = React.lazy(() => import('./components/AnalysisResult'
 import { PlayerProfile, AnalysisResult } from './types';
 import { analyzeExposure } from './services/geminiService';
 import { GraduationCap, Users, ShieldCheck, X, Globe, ArrowRight } from 'lucide-react';
+const FeedbackWidget = React.lazy(() => import('./components/FeedbackWidget').then(m => ({ default: m.FeedbackWidget })));
 
 const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-fade-in print:hidden">
@@ -309,6 +310,10 @@ const App: React.FC = () => {
       </footer>
 
       {showMethodology && <MethodologyOverlay onClose={() => setShowMethodology(false)} />}
+
+      <Suspense fallback={null}>
+        <FeedbackWidget />
+      </Suspense>
     </div>
   );
 };
