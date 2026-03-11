@@ -8,6 +8,13 @@ import { analyzeExposure } from './services/geminiService';
 import { GraduationCap, Users, ShieldCheck, X, Globe, ArrowRight } from 'lucide-react';
 const FeedbackWidget = React.lazy(() => import('./components/FeedbackWidget').then(m => ({ default: m.FeedbackWidget })));
 
+// Google Analytics gtag type declaration
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-fade-in print:hidden">
     <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col relative animate-slide-up">
@@ -121,9 +128,23 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
+    // GA4: Lead captured
+    window.gtag?.('event', 'generate_lead', {
+      site: 'exposure-engine.vercel.app',
+      form_name: 'visibility_analysis',
+      sport: 'soccer',
+    });
+
     try {
       const result = await analyzeExposure(submittedProfile);
       setAnalysisResult(result);
+
+      // GA4: Analysis completed
+      window.gtag?.('event', 'analysis_complete', {
+        site: 'exposure-engine.vercel.app',
+        form_name: 'visibility_calculator',
+        sport: 'soccer',
+      });
 
       // Fire-and-forget save to Supabase (lazy-loaded to reduce main bundle)
       const leadData = {

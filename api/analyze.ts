@@ -521,7 +521,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.1-flash-lite-preview',
         contents: { parts: [{ text: userPrompt }] },
         config: {
           responseMimeType: 'application/json',
