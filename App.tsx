@@ -130,9 +130,8 @@ const App: React.FC = () => {
 
     // GA4: Lead captured
     window.gtag?.('event', 'generate_lead', {
-      site: 'exposure-engine.vercel.app',
-      form_name: 'visibility_analysis',
-      sport: 'soccer',
+      site: 'exposure-engine-olive.vercel.app',
+      form_name: 'player_visibility_assessment',
     });
 
     try {
