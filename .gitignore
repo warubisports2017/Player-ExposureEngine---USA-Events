@@ -28,3 +28,6 @@ dist-ssr
 .env.local
 .vercel
 .env*.local
+
+# Test scripts (may contain API keys)
+test-*.mjs
