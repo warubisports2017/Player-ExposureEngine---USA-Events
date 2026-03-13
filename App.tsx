@@ -140,7 +140,7 @@ const App: React.FC = () => {
 
       // GA4: Analysis completed
       window.gtag?.('event', 'analysis_complete', {
-        site: 'exposure-engine.vercel.app',
+        site: 'exposure-engine-olive.vercel.app',
         form_name: 'visibility_calculator',
         sport: 'soccer',
       });
