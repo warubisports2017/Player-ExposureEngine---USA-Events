@@ -32,6 +32,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Review this PR for bugs, security issues, and code quality problems.
+            Also flag significant simplification opportunities - duplicated logic, unnecessary complexity, or code that could be reused.
             Focus on real issues - not style preferences.
             Be concise. Only comment if you find something worth flagging.
 
