@@ -101,8 +101,8 @@ const App: React.FC = () => {
   });
   const [showMethodology, setShowMethodology] = useState(false);
 
-  // Capture referral source from URL (e.g., ?ref=coach-smith)
-  const [referralSource] = useState<string | null>(() => {
+  // Capture referral scout ID from URL (e.g., ?ref=<scoutId>)
+  const [referralScoutId] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('ref') || null;
   });
@@ -135,7 +135,11 @@ const App: React.FC = () => {
     });
 
     try {
-      const result = await analyzeExposure(submittedProfile);
+      // Include scout referral ID in profile sent to API
+      const profileWithRef = referralScoutId
+        ? { ...submittedProfile, referralScoutId }
+        : submittedProfile;
+      const result = await analyzeExposure(profileWithRef);
       setAnalysisResult(result);
 
       // GA4: Analysis completed
@@ -173,7 +177,7 @@ const App: React.FC = () => {
         visibility_scores: Object.fromEntries(
           result.visibilityScores.map((v: any) => [v.level.toLowerCase(), v.visibilityPercent])
         ),
-        referral_source: referralSource,
+        referral_source: referralScoutId,
       };
       const { supabase } = await import('./services/supabase');
       if (leadData.email) {

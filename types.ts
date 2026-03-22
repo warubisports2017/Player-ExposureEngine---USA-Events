@@ -83,6 +83,7 @@ export interface PlayerProfile {
   coachesContacted: number;
   responsesReceived: number;
   offersReceived: number;
+  referralScoutId?: string; // Scout ID from ?ref= URL param
 }
 
 // AI Analysis Result Types
