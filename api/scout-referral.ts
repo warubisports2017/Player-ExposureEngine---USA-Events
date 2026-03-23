@@ -35,9 +35,9 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
   if (!scoutId) return;
 
   const url = process.env.SCOUT_SUPABASE_URL;
-  const key = process.env.SCOUT_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.warn('Scout referral: missing SCOUT_SUPABASE_URL or SCOUT_SUPABASE_ANON_KEY');
+  const serviceKey = process.env.SCOUT_SUPABASE_SERVICE_KEY;
+  if (!url || !serviceKey) {
+    console.warn('Scout referral: missing SCOUT_SUPABASE_URL or SCOUT_SUPABASE_SERVICE_KEY');
     return;
   }
 
@@ -55,9 +55,15 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
     .map((v: any) => `${v.level}: ${v.visibilityPercent}%`)
     .join(', ');
 
+  // Get latest season club name
+  const latestSeason = Array.isArray(profile.seasons) && profile.seasons.length > 0
+    ? profile.seasons.reduce((a: any, b: any) => (b.year >= a.year ? b : a))
+    : null;
+
   const prospect = {
     scout_id: scoutId,
     name: `${profile.firstName} ${profile.lastName}`.trim(),
+    email: profile.email || null,
     position: POSITION_MAP[profile.position] || profile.position,
     age: calculateAge(profile.dateOfBirth),
     dominant_foot: profile.dominantFoot,
@@ -68,6 +74,7 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
     grad_year: profile.gradYear ?? null,
     date_of_birth: profile.dateOfBirth || null,
     height: profile.height || null,
+    club: latestSeason?.teamName || null,
     evaluation: {
       source: 'exposure_engine',
       visibility_scores: Object.fromEntries(
@@ -93,8 +100,8 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: key,
-      Authorization: `Bearer ${key}`,
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
       Prefer: 'return=minimal',
     },
     body: JSON.stringify(prospect),
