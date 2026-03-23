@@ -537,9 +537,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Fire-and-forget: create prospect in scout's pipeline if referral
       if (profile.referralScoutId) {
-        import('./scout-referral').then(({ createScoutProspect }) =>
-          createScoutProspect(profile, result)
-        ).catch((err) => console.warn('Scout referral error:', err));
+        createScoutProspect(profile, result).catch((err) =>
+          console.warn('Scout referral error:', err)
+        );
       }
 
       return res.status(200).json(result);
@@ -550,5 +550,98 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       console.warn(`Attempt ${attempt + 1} failed, retrying...`);
     }
+  }
+}
+
+// --- Scout Referral (inlined - Vercel bundler can't resolve dynamic imports) ---
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const RATING_TO_INT: Record<string, number> = {
+  Elite: 95, 'Top 10%': 85, 'Above Average': 70, Average: 50, 'Below Average': 30,
+};
+
+async function createScoutProspect(profile: any, result: any): Promise<void> {
+  const scoutId = profile.referralScoutId;
+  if (!scoutId || !UUID_RE.test(scoutId)) return;
+
+  const url = process.env.SCOUT_SUPABASE_URL;
+  const serviceKey = process.env.SCOUT_SUPABASE_SERVICE_KEY;
+  if (!url || !serviceKey) {
+    console.warn('Scout referral: missing SCOUT_SUPABASE_URL or SCOUT_SUPABASE_SERVICE_KEY');
+    return;
+  }
+
+  const visScores = Array.isArray(result.visibilityScores) ? result.visibilityScores : [];
+  const sorted = [...visScores].sort((a: any, b: any) => b.visibilityPercent - a.visibilityPercent);
+  const bestLevel = sorted[0]?.level || null;
+  const bestScore = sorted[0]?.visibilityPercent || 0;
+
+  const latestSeason = Array.isArray(profile.seasons) && profile.seasons.length > 0
+    ? profile.seasons.reduce((a: any, b: any) => (b.year >= a.year ? b : a))
+    : null;
+
+  const ap = profile.athleticProfile || {};
+
+  const dob = profile.dateOfBirth || null;
+  let age: number | null = null;
+  if (dob) {
+    const birth = new Date(dob + 'T12:00:00');
+    const now = new Date();
+    age = now.getFullYear() - birth.getFullYear();
+    const md = now.getMonth() - birth.getMonth();
+    if (md < 0 || (md === 0 && now.getDate() < birth.getDate())) age--;
+  }
+
+  const prospect = {
+    scout_id: scoutId,
+    name: `${profile.firstName} ${profile.lastName}`.trim(),
+    email: profile.email || null,
+    position: profile.position || null,
+    status: 'lead',
+    evaluation: {
+      source: 'exposure_engine',
+      score: bestScore,
+      summary: result.plainLanguageSummary || '',
+      strengths: result.keyStrengths || [],
+      weaknesses: (result.keyRisks || []).map((r: any) => `${r.category}: ${r.message}`),
+      collegeLevel: bestLevel,
+      recommendedPathways: sorted.slice(0, 3).map((v: any) => `${v.level}: ${v.visibilityPercent}%`),
+      coach_evaluation: result.coachShortEvaluation || '',
+      readiness_score: result.readinessScore || {},
+      visibility_scores: Object.fromEntries(visScores.map((v: any) => [v.level, v.visibilityPercent])),
+    },
+    date_of_birth: dob,
+    age,
+    height: profile.height || null,
+    dominant_foot: profile.dominantFoot || null,
+    nationality: Array.isArray(profile.citizenship) ? profile.citizenship.join(', ') : profile.citizenship || null,
+    club: latestSeason?.teamName || null,
+    team_level: latestSeason?.league?.[0] || null,
+    gpa: profile.academics?.gpa ?? null,
+    grad_year: profile.gradYear ?? null,
+    sat_act: profile.academics?.testScore || null,
+    pace: RATING_TO_INT[ap.speed] ?? null,
+    physical: RATING_TO_INT[ap.strength] ?? null,
+    technical: RATING_TO_INT[ap.technical] ?? null,
+    tactical: RATING_TO_INT[ap.tactical] ?? null,
+    activity_status: 'spark',
+    notes: `Via Exposure Engine. Best fit: ${bestLevel} at ${bestScore}%`,
+  };
+
+  const response = await fetch(`${url}/rest/v1/scout_prospects`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify(prospect),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.warn(`Scout referral: POST failed (${response.status}): ${body}`);
   }
 }
