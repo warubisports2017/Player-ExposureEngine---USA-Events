@@ -3,20 +3,24 @@
  * when a player completes an Exposure Engine analysis via ?ref=<scoutId>
  *
  * Best-effort: never blocks or fails the analysis response.
+ * Uses service_role key to bypass RLS (server-side only).
  */
 
-const POSITION_MAP: Record<string, string> = {
-  GK: 'Goalkeeper',
-  CB: 'Center Back',
-  LB: 'Left Back',
-  RB: 'Right Back',
-  CDM: 'Defensive Midfielder',
-  CM: 'Central Midfielder',
-  CAM: 'Attacking Midfielder',
-  LW: 'Left Wing',
-  RW: 'Right Wing',
-  ST: 'Striker',
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Map self-assessment labels to 1-99 scale
+const RATING_MAP: Record<string, number> = {
+  Elite: 95,
+  'Top 10%': 85,
+  'Above Average': 70,
+  Average: 50,
+  'Below Average': 30,
 };
+
+function ratingToInt(val: string | undefined): number | null {
+  if (!val) return null;
+  return RATING_MAP[val] ?? null;
+}
 
 function calculateAge(dob: string): number | null {
   if (!dob) return null;
@@ -32,7 +36,7 @@ function calculateAge(dob: string): number | null {
 
 export async function createScoutProspect(profile: any, result: any): Promise<void> {
   const scoutId = profile.referralScoutId;
-  if (!scoutId) return;
+  if (!scoutId || !UUID_REGEX.test(scoutId)) return;
 
   const url = process.env.SCOUT_SUPABASE_URL;
   const serviceKey = process.env.SCOUT_SUPABASE_SERVICE_KEY;
@@ -41,59 +45,64 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
     return;
   }
 
-  // Find best visibility score
+  // Visibility scores and best fit
   const visScores = Array.isArray(result.visibilityScores) ? result.visibilityScores : [];
-  const bestVis = visScores.reduce(
-    (best: any, v: any) => (v.visibilityPercent > (best?.visibilityPercent ?? 0) ? v : best),
-    visScores[0] || null
-  );
-
-  // Build best fit summary from top 2 levels
   const sorted = [...visScores].sort((a: any, b: any) => b.visibilityPercent - a.visibilityPercent);
-  const bestFitSummary = sorted
-    .slice(0, 2)
-    .map((v: any) => `${v.level}: ${v.visibilityPercent}%`)
-    .join(', ');
+  const bestLevel = sorted[0]?.level || null;
+  const bestScore = sorted[0]?.visibilityPercent || 0;
 
-  // Get latest season club name
+  // Latest season for club/team info
   const latestSeason = Array.isArray(profile.seasons) && profile.seasons.length > 0
     ? profile.seasons.reduce((a: any, b: any) => (b.year >= a.year ? b : a))
     : null;
 
+  // Athletic profile ratings (self-assessed labels -> 1-99 integers)
+  const ap = profile.athleticProfile || {};
+
   const prospect = {
+    // Required fields
     scout_id: scoutId,
     name: `${profile.firstName} ${profile.lastName}`.trim(),
     email: profile.email || null,
-    position: POSITION_MAP[profile.position] || profile.position,
-    age: calculateAge(profile.dateOfBirth),
-    dominant_foot: profile.dominantFoot,
-    nationality: Array.isArray(profile.citizenship)
-      ? profile.citizenship.join(', ')
-      : profile.citizenship || null,
-    gpa: profile.academics?.gpa ?? null,
-    grad_year: profile.gradYear ?? null,
-    date_of_birth: profile.dateOfBirth || null,
-    height: profile.height || null,
-    club: latestSeason?.teamName || null,
+    position: profile.position || null,
+    status: 'lead',
     evaluation: {
       source: 'exposure_engine',
+      score: bestScore,
+      summary: result.plainLanguageSummary || '',
+      strengths: result.keyStrengths || [],
+      weaknesses: (result.keyRisks || []).map((r: any) => `${r.category}: ${r.message}`),
+      collegeLevel: bestLevel,
+      recommendedPathways: sorted.slice(0, 3).map((v: any) => `${v.level}: ${v.visibilityPercent}%`),
+      coach_evaluation: result.coachShortEvaluation || '',
+      readiness_score: result.readinessScore || {},
       visibility_scores: Object.fromEntries(
         visScores.map((v: any) => [v.level, v.visibilityPercent])
       ),
-      readiness_score: result.readinessScore || {},
-      key_strengths: result.keyStrengths || [],
-      key_risks: (result.keyRisks || []).map((r: any) => ({
-        category: r.category,
-        message: r.message,
-        severity: r.severity,
-      })),
-      summary: result.plainLanguageSummary || '',
-      coach_evaluation: result.coachShortEvaluation || '',
-      best_fit: bestFitSummary,
     },
-    status: 'lead',
+
+    // Optional fields - fill what we have
+    date_of_birth: profile.dateOfBirth || null,
+    age: calculateAge(profile.dateOfBirth),
+    height: profile.height || null,
+    dominant_foot: profile.dominantFoot || null,
+    nationality: Array.isArray(profile.citizenship)
+      ? profile.citizenship.join(', ')
+      : profile.citizenship || null,
+    club: latestSeason?.teamName || null,
+    team_level: latestSeason?.league?.[0] || null,
+    gpa: profile.academics?.gpa ?? null,
+    grad_year: profile.gradYear ?? null,
+    sat_act: profile.academics?.testScore || null,
+
+    // Athletic ratings as 1-99
+    pace: ratingToInt(ap.speed),
+    physical: ratingToInt(ap.strength),
+    technical: ratingToInt(ap.technical),
+    tactical: ratingToInt(ap.tactical),
+
     activity_status: 'spark',
-    notes: `Best fit: ${bestFitSummary}. ${bestVis ? `Top level: ${bestVis.level} at ${bestVis.visibilityPercent}%` : ''}`.trim(),
+    notes: `Via Exposure Engine. Best fit: ${bestLevel} at ${bestScore}%`,
   };
 
   const response = await fetch(`${url}/rest/v1/scout_prospects`, {
