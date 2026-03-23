@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
-import { createScoutProspect } from './scout-referral';
 
 // System prompt inlined here because Vercel's serverless bundler can't resolve
 // cross-directory TypeScript imports from the Vite project root.
@@ -538,9 +537,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Fire-and-forget: create prospect in scout's pipeline if referral
       if (profile.referralScoutId) {
-        createScoutProspect(profile, result).catch((err) =>
-          console.warn('Scout referral error:', err)
-        );
+        import('./scout-referral').then(({ createScoutProspect }) =>
+          createScoutProspect(profile, result)
+        ).catch((err) => console.warn('Scout referral error:', err));
       }
 
       return res.status(200).json(result);
