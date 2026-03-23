@@ -535,11 +535,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const result = JSON.parse(text);
 
-      // Fire-and-forget: create prospect in scout's pipeline if referral
+      // Create prospect in scout's pipeline if referral (awaited so Vercel doesn't kill it)
       if (profile.referralScoutId) {
-        createScoutProspect(profile, result).catch((err) =>
-          console.warn('Scout referral error:', err)
-        );
+        try {
+          await createScoutProspect(profile, result);
+        } catch (err) {
+          console.warn('Scout referral error:', err);
+        }
       }
 
       return res.status(200).json(result);
