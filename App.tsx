@@ -181,9 +181,13 @@ const App: React.FC = () => {
       };
       const { supabase } = await import('./services/supabase');
       if (leadData.email) {
-        supabase.from('website_leads').upsert(leadData, { onConflict: 'email' }).then(() => {});
-        // Sync to Brevo for email automation
-        supabase.functions.invoke('sync-lead-to-brevo', { body: leadData }).catch(() => {});
+        // Upsert via RPC - increments submission_count on re-submissions
+        supabase.rpc('upsert_website_lead', { lead_data: leadData }).then(({ data }) => {
+          // Only notify on first submission, always sync profile data to Brevo
+          supabase.functions.invoke('sync-lead-to-brevo', {
+            body: { ...leadData, is_new: data?.is_new ?? true }
+          }).catch(() => {});
+        });
       } else {
         supabase.from('website_leads').insert(leadData).then(() => {});
       }
