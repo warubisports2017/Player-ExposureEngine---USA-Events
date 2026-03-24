@@ -29,12 +29,12 @@ const PrintHeader = ({ profile }: { profile: PlayerProfile }) => {
       <div className="flex justify-between items-end pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 leading-tight">Exposure<span className="text-emerald-600">Engine</span></h1>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium mt-0.5">Scouting Report</p>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium mt-0.5">Self-Assessment Report</p>
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-slate-800">{profile.firstName} {profile.lastName}</h2>
           <p className="text-[11px] text-slate-500">Class of {profile.gradYear} • {profile.position}{profile.height ? ` • ${profile.height}` : ''}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">{dateStr} • <span className="text-red-500 font-semibold">Confidential</span></p>
+          <p className="text-[10px] text-slate-400 mt-0.5">{dateStr} • <span className="text-amber-600 font-semibold">Based on self-reported data</span></p>
         </div>
       </div>
     </div>
@@ -329,12 +329,12 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         for (const item of pages[i]) {
           pdf.addImage(item.img, 'JPEG', item.x, item.y, item.w, item.h);
         }
-        // Watermark — diagonal "UNOFFICIAL" across each page
+        // Watermark — diagonal "SELF-ASSESSMENT" across each page
         pdf.saveGraphicsState();
         pdf.setGState(new (pdf as any).GState({ opacity: 0.06 }));
-        pdf.setFontSize(80);
+        pdf.setFontSize(72);
         pdf.setTextColor(150, 150, 150);
-        pdf.text('UNOFFICIAL', pageWidth / 2, pageHeight / 2, {
+        pdf.text('SELF-ASSESSMENT', pageWidth / 2, pageHeight / 2, {
           align: 'center',
           angle: 45,
         });
@@ -343,7 +343,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
         pdf.setFontSize(7);
         pdf.setTextColor(148, 163, 184);
         pdf.text('ExposureEngine by Warubi Sports', margin, pageHeight - 6);
-        pdf.text('Confidential', pageWidth / 2, pageHeight - 6, { align: 'center' });
+        pdf.text('Based on self-reported data - not a verified scouting evaluation', pageWidth / 2, pageHeight - 6, { align: 'center' });
         pdf.text(`${i + 1} / ${totalPages}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
       }
 
@@ -947,10 +947,10 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
 
       {/* TAKE ACTION FOOTER (PDF & EMAIL) */}
       <div className="no-print mt-12 border-t border-slate-200 dark:border-white/5 pt-8">
-         <div className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-6 rounded-2xl border border-slate-300 dark:border-white/10">
+         <div className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-6 rounded-2xl border border-slate-300 dark:border-white/10 mb-4">
             <div className="mb-6 md:mb-0">
                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Save Your Report</h3>
-               <p className="text-sm text-slate-600 dark:text-slate-400">Download a PDF copy or email this analysis to yourself.</p>
+               <p className="text-sm text-slate-600 dark:text-slate-400">Download a PDF copy or email this self-assessment to yourself.</p>
             </div>
             <div className="flex space-x-4">
                {/* Email Button */}

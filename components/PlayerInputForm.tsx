@@ -202,11 +202,11 @@ const DEMO_PROFILES: Record<string, Partial<PlayerProfile>> = {
     seasons: [{ year: 2025, teamName: 'Lincoln High', competitiveLevel: 'High_School' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, gamesPlayed: 18, honors: 'State Player of Year' }]
   },
   "International / Semi-Pro": {
-    firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024, citizenship: ['Other'], otherCitizenship: 'Croatia',
-    experienceLevel: ['Semi_Pro_UPSL_NPSL_WPSL', 'International_Academy_U19'], videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
-    academics: { graduationYear: 2024, gpa: 3.0, testScore: 'TOEFL Passed' },
-    athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Elite' },
-    seasons: [{ year: 2025, teamName: 'FC Berlin U19', competitiveLevel: 'Semi_Professional' as CompetitiveLevel, namedLeagueRoute: false, minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, gamesPlayed: 30, honors: 'League XI' }]
+    firstName: 'Marco', lastName: 'Weber', gender: 'Male', position: 'CM', gradYear: 2026, citizenship: ['Other'], otherCitizenship: 'Germany',
+    experienceLevel: ['Semi_Pro_UPSL_NPSL_WPSL'], videoType: 'Raw_Game_Footage', coachesContacted: 8, responsesReceived: 2, offersReceived: 0,
+    academics: { graduationYear: 2026, gpa: 3.2, testScore: 'TOEFL Passed' },
+    athleticProfile: { speed: 'Above_Average', strength: 'Above_Average', endurance: 'Top_10_Percent', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
+    seasons: [{ year: 2025, teamName: 'SV Bergisch Gladbach', competitiveLevel: 'Semi_Professional' as CompetitiveLevel, namedLeagueRoute: false, leagueName: 'Oberliga Niederrhein', minutesPlayedPercent: 75, mainRole: 'Rotation', goals: 3, assists: 4, gamesPlayed: 22, honors: '' }]
   },
   "Bench Warmer (MLS NEXT)": {
     firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027, citizenship: ['USA'],
