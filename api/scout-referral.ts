@@ -90,7 +90,7 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
       ? profile.citizenship.join(', ')
       : profile.citizenship || null,
     club: latestSeason?.teamName || null,
-    team_level: latestSeason?.league?.[0] || null,
+    team_level: latestSeason?.competitiveLevel || latestSeason?.league?.[0] || null,
     gpa: profile.academics?.gpa ?? null,
     grad_year: profile.gradYear ?? null,
     sat_act: profile.academics?.testScore || null,

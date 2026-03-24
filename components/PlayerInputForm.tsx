@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PlayerProfile, SeasonStat, ExposureEvent, Position, YouthLeague } from '../types';
-import { LEAGUES, POSITIONS, ATHLETIC_RATINGS } from '../constants';
+import { PlayerProfile, SeasonStat, ExposureEvent, Position, CompetitiveLevel } from '../types';
+import { NAMED_LEAGUES, GENERIC_LEVELS, COMPETITIVE_LEVEL_LABELS, POSITIONS, ATHLETIC_RATINGS } from '../constants';
 import { Plus, Trash2, ChevronRight, Video, History, Zap, Check, ChevronsUpDown, Lightbulb, ChevronDown, User, GraduationCap, Info, Lock } from 'lucide-react';
 
 interface Props {
@@ -46,61 +46,49 @@ const SectionHeader = ({ step, title, icon: Icon, infoText }: { step: string, ti
   );
 };
 
-const LeagueMultiSelect = ({ selected, onChange }: { selected: YouthLeague[], onChange: (leagues: YouthLeague[]) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleLeague = (league: YouthLeague) => {
-    if (selected.includes(league)) {
-      onChange(selected.filter(l => l !== league));
-    } else {
-      onChange([...selected, league]);
-    }
-  };
+const CompetitiveLevelSelect = ({ value, namedRoute, onSwitch, onChangeLevel }: {
+  value: CompetitiveLevel;
+  namedRoute: boolean;
+  onSwitch: (isNamed: boolean, defaultLevel: CompetitiveLevel) => void;
+  onChangeLevel: (level: CompetitiveLevel) => void;
+}) => {
+  const selectClass = "w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all hover:border-slate-400 dark:hover:border-slate-600";
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/50 rounded-lg p-2.5 text-sm text-left text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all hover:border-slate-400 dark:hover:border-slate-600 flex justify-between items-center group"
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onSwitch(true, 'MLS_NEXT')}
+          className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${namedRoute ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-transparent border-slate-700/50 text-slate-400 hover:border-slate-600'}`}
+        >
+          NA Youth League
+        </button>
+        <button
+          type="button"
+          onClick={() => onSwitch(false, 'Semi_Professional')}
+          className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${!namedRoute ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-transparent border-slate-700/50 text-slate-400 hover:border-slate-600'}`}
+        >
+          Other / International
+        </button>
+      </div>
+      <select
+        className={selectClass}
+        value={value}
+        onChange={(e) => onChangeLevel(e.target.value as CompetitiveLevel)}
       >
-        <span className="truncate block pr-6">
-          {selected.length > 0 
-            ? selected.map(l => l.replace(/_/g, ' ')).join(', ') 
-            : <span className="text-slate-400 dark:text-slate-500">Select Leagues...</span>}
-        </span>
-        <ChevronsUpDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 absolute right-2.5" />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-          {LEAGUES.map((league) => (
-            <div
-              key={league}
-              onClick={() => toggleLeague(league)}
-              className="flex items-center px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800/50 last:border-0"
-            >
-              <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 transition-colors ${selected.includes(league) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950'}`}>
-                {selected.includes(league) && <Check className="w-3 h-3 text-white" />}
-              </div>
-              <span className={`text-sm ${selected.includes(league) ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
-                {league.replace(/_/g, ' ')}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+        {namedRoute ? (
+          NAMED_LEAGUES.map(l => (
+            <option key={l.value} value={l.value}>{l.label}</option>
+          ))
+        ) : (
+          GENERIC_LEVELS.map(l => (
+            <option key={l.value} value={l.value}>
+              {l.label}{l.hint ? ` - ${l.hint}` : ''}
+            </option>
+          ))
+        )}
+      </select>
     </div>
   );
 };
@@ -176,70 +164,70 @@ const DEMO_PROFILES: Record<string, Partial<PlayerProfile>> = {
     experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 25, responsesReceived: 8, offersReceived: 1,
     academics: { graduationYear: 2026, gpa: 3.6, testScore: '1250 SAT' },
     athleticProfile: { speed: 'Elite', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, gamesPlayed: 28, honors: 'All-American' }]
+    seasons: [{ year: 2025, teamName: 'LA Galaxy Academy', competitiveLevel: 'MLS_NEXT' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 8, assists: 12, gamesPlayed: 28, honors: 'All-American' }]
   },
   "Solid Recruit (ECNL)": {
     firstName: 'Liam', lastName: 'Smith', gender: 'Male', position: 'CB', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 15, responsesReceived: 2, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.2, testScore: '1100 SAT' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'Mustang SC', league: ['ECNL'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, gamesPlayed: 24, honors: '1st Team All-Conference' }]
+    seasons: [{ year: 2025, teamName: 'Mustang SC', competitiveLevel: 'ECNL_GA' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 3, assists: 1, gamesPlayed: 24, honors: '1st Team All-Conference' }]
   },
   "High Academic D3 (ECNL RL)": {
     firstName: 'Emma', lastName: 'Davis', gender: 'Female', position: 'CDM', gradYear: 2025, citizenship: ['USA'],
     experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 40, responsesReceived: 12, offersReceived: 2,
     academics: { graduationYear: 2025, gpa: 4.0, testScore: '1450 SAT' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Above_Average', workRate: 'Top_10_Percent', technical: 'Above_Average', tactical: 'Top_10_Percent' },
-    seasons: [{ year: 2025, teamName: 'Crossfire', league: ['ECNL_RL'], minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, gamesPlayed: 20, honors: 'Scholar Athlete' }]
+    seasons: [{ year: 2025, teamName: 'Crossfire', competitiveLevel: 'ECNL_RL_USYS_USL' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 95, mainRole: 'Key_Starter', goals: 2, assists: 6, gamesPlayed: 20, honors: 'Scholar Athlete' }]
   },
   "D2/NAIA Target (NPL/USYS)": {
     firstName: 'Carlos', lastName: 'Mendez', gender: 'Male', position: 'RW', gradYear: 2026, citizenship: ['USA', 'Mexico'],
     experienceLevel: [], videoType: 'Raw_Game_Footage', coachesContacted: 10, responsesReceived: 1, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 2.8, testScore: '' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Above_Average', workRate: 'Above_Average', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Local Club', league: ['Elite_Local'], minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, gamesPlayed: 22, honors: 'Team MVP' }]
+    seasons: [{ year: 2025, teamName: 'Local Club', competitiveLevel: 'NPL_Regional' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 80, mainRole: 'Key_Starter', goals: 12, assists: 4, gamesPlayed: 22, honors: 'Team MVP' }]
   },
   "JUCO Route (Academic Risk)": {
     firstName: 'Jayden', lastName: 'Williams', gender: 'Male', position: 'ST', gradYear: 2025, citizenship: ['USA'],
     experienceLevel: [], videoType: 'Edited_Highlight_Reel', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2025, gpa: 2.1, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Elite', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Above_Average' },
-    seasons: [{ year: 2025, teamName: 'Top Academy', league: ['MLS_NEXT'], minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, gamesPlayed: 25, honors: 'Top Scorer' }]
+    seasons: [{ year: 2025, teamName: 'Top Academy', competitiveLevel: 'MLS_NEXT' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 70, mainRole: 'Key_Starter', goals: 15, assists: 2, gamesPlayed: 25, honors: 'Top Scorer' }]
   },
   "High School Star (No Club)": {
     firstName: 'Sarah', lastName: 'Johnson', gender: 'Female', position: 'CAM', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: [], videoType: 'Raw_Game_Footage', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '1200' },
     athleticProfile: { speed: 'Top_10_Percent', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Top_10_Percent', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Lincoln High', league: ['High_School'], minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, gamesPlayed: 18, honors: 'State Player of Year' }]
+    seasons: [{ year: 2025, teamName: 'Lincoln High', competitiveLevel: 'High_School' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 100, mainRole: 'Key_Starter', goals: 20, assists: 15, gamesPlayed: 18, honors: 'State Player of Year' }]
   },
   "International / Semi-Pro": {
     firstName: 'Luka', lastName: 'Modric', gender: 'Male', position: 'CM', gradYear: 2024, citizenship: ['Other'], otherCitizenship: 'Croatia',
     experienceLevel: ['Semi_Pro_UPSL_NPSL_WPSL', 'International_Academy_U19'], videoType: 'Edited_Highlight_Reel', coachesContacted: 50, responsesReceived: 15, offersReceived: 3,
     academics: { graduationYear: 2024, gpa: 3.0, testScore: 'TOEFL Passed' },
     athleticProfile: { speed: 'Above_Average', strength: 'Top_10_Percent', endurance: 'Elite', workRate: 'Elite', technical: 'Elite', tactical: 'Elite' },
-    seasons: [{ year: 2025, teamName: 'FC Berlin U19', league: ['Other'], minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, gamesPlayed: 30, honors: 'League XI' }]
+    seasons: [{ year: 2025, teamName: 'FC Berlin U19', competitiveLevel: 'Semi_Professional' as CompetitiveLevel, namedLeagueRoute: false, minutesPlayedPercent: 85, mainRole: 'Key_Starter', goals: 5, assists: 10, gamesPlayed: 30, honors: 'League XI' }]
   },
   "Bench Warmer (MLS NEXT)": {
     firstName: 'Ethan', lastName: 'Hunt', gender: 'Male', position: 'GK', gradYear: 2027, citizenship: ['USA'],
     experienceLevel: [], videoType: 'None', coachesContacted: 5, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2027, gpa: 3.3, testScore: '' },
     athleticProfile: { speed: 'Average', strength: 'Average', endurance: 'Average', workRate: 'Average', technical: 'Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'Big Club', league: ['MLS_NEXT'], minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, gamesPlayed: 3, cleanSheets: 0, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Big Club', competitiveLevel: 'MLS_NEXT' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 10, mainRole: 'Bench', goals: 0, assists: 0, gamesPlayed: 3, cleanSheets: 0, honors: '' }]
   },
   "The Ghost (No Video)": {
     firstName: 'Chris', lastName: 'Invisible', gender: 'Male', position: 'RB', gradYear: 2026, citizenship: ['USA'],
     experienceLevel: [], videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2026, gpa: 3.5, testScore: '' },
     athleticProfile: { speed: 'Elite', strength: 'Average', endurance: 'Top_10_Percent', workRate: 'Elite', technical: 'Above_Average', tactical: 'Average' },
-    seasons: [{ year: 2025, teamName: 'ECNL Team', league: ['ECNL'], minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, gamesPlayed: 24, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'ECNL Team', competitiveLevel: 'ECNL_GA' as CompetitiveLevel, namedLeagueRoute: true, minutesPlayedPercent: 90, mainRole: 'Key_Starter', goals: 5, assists: 8, gamesPlayed: 24, honors: '' }]
   },
   "Recreational / Beginner": {
     firstName: 'Sam', lastName: 'Rookie', gender: 'Male', position: 'CM', gradYear: 2028, citizenship: ['USA'],
     experienceLevel: [], videoType: 'None', coachesContacted: 0, responsesReceived: 0, offersReceived: 0,
     academics: { graduationYear: 2028, gpa: 3.0, testScore: '' },
     athleticProfile: { speed: 'Below_Average', strength: 'Below_Average', endurance: 'Average', workRate: 'Average', technical: 'Below_Average', tactical: 'Below_Average' },
-    seasons: [{ year: 2025, teamName: 'Town Rec', league: ['Other'], minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, gamesPlayed: 10, honors: '' }]
+    seasons: [{ year: 2025, teamName: 'Town Rec', competitiveLevel: 'Semi_Professional' as CompetitiveLevel, namedLeagueRoute: false, minutesPlayedPercent: 40, mainRole: 'Rotation', goals: 0, assists: 0, gamesPlayed: 10, honors: '' }]
   }
 };
 
@@ -317,7 +305,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
       {
         year: 2025,
         teamName: '',
-        league: ['ECNL'],
+        competitiveLevel: 'ECNL_GA' as CompetitiveLevel,
+        namedLeagueRoute: true,
         minutesPlayedPercent: 80,
         mainRole: 'Key_Starter',
         goals: 0,
@@ -436,7 +425,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
         {
           year: prev.seasons[prev.seasons.length - 1].year - 1,
           teamName: '',
-          league: ['High_School'],
+          competitiveLevel: prev.seasons[prev.seasons.length - 1].competitiveLevel || ('ECNL_GA' as CompetitiveLevel),
+          namedLeagueRoute: prev.seasons[prev.seasons.length - 1].namedLeagueRoute ?? true,
           minutesPlayedPercent: 50,
           mainRole: 'Rotation',
           goals: 0,
@@ -998,22 +988,26 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                     />
                  </div>
                  <div className="col-span-1 md:col-span-2">
-                    <Label>Leagues (Select All)</Label>
-                    <LeagueMultiSelect 
-                      selected={season.league}
-                      onChange={(leagues) => updateSeason(idx, 'league', leagues)}
+                    <Label>Competitive Level</Label>
+                    <CompetitiveLevelSelect
+                      value={season.competitiveLevel || 'ECNL_GA'}
+                      namedRoute={season.namedLeagueRoute ?? true}
+                      onSwitch={(isNamed, defaultLevel) => {
+                        const newSeasons = [...profile.seasons];
+                        newSeasons[idx] = { ...newSeasons[idx], namedLeagueRoute: isNamed, competitiveLevel: defaultLevel };
+                        setProfile(prev => ({ ...prev, seasons: newSeasons }));
+                      }}
+                      onChangeLevel={(level) => updateSeason(idx, 'competitiveLevel', level)}
                     />
-                    {season.league.includes('Other') && (
-                      <div className="mt-2 animate-fade-in">
-                        <input
-                          type="text"
-                          placeholder="Specify League Name"
-                          className={`${inputClass} py-1.5 text-xs border-emerald-500/30 focus:border-emerald-500 bg-white dark:bg-slate-900`}
-                          value={season.otherLeagueName || ''}
-                          onChange={(e) => updateSeason(idx, 'otherLeagueName', e.target.value)}
-                        />
-                      </div>
-                    )}
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        placeholder="Team / League Name (optional)"
+                        className={`${inputClass} py-1.5 text-xs`}
+                        value={season.leagueName || ''}
+                        onChange={(e) => updateSeason(idx, 'leagueName', e.target.value)}
+                      />
+                    </div>
                  </div>
                  <div>
                     <Label>Role</Label>

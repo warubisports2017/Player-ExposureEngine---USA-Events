@@ -1,4 +1,4 @@
-import { PlayerProfile, AnalysisResult, VerifiedReadiness, GapFactors, YouthLeague } from "../types";
+import { PlayerProfile, AnalysisResult, VerifiedReadiness, GapFactors, CompetitiveLevel } from "../types";
 
 const LEVELS = ["D1", "D2", "D3", "NAIA", "JUCO"] as const;
 
@@ -6,14 +6,15 @@ function clamp(val: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, val));
 }
 
-// League tier for verified readiness calculation
-// MLS_NEXT and ECNL/GA are both tier 4 for verified readiness (self-assessment credibility)
-// The base score differentiation happens in the API prompt, not here
-const LEAGUE_TIER: Record<YouthLeague, number> = {
-  MLS_NEXT: 4, ECNL: 4, Girls_Academy: 4,
-  ECNL_RL: 3, USYS_National_League: 3,
-  Elite_Local: 2,
-  High_School: 1, Other: 1,
+// Competitive level tier for verified readiness calculation
+// Higher number = more credible self-assessment
+const LEVEL_TIER: Record<string, number> = {
+  // Named NA Youth
+  MLS_NEXT: 5, ECNL_GA: 4, ECNL_RL_USYS_USL: 3, NPL_Regional: 2, High_School: 1, Local_Recreational: 1,
+  // Generic
+  Professional: 5, Semi_Professional: 4, Amateur: 3, Recreational: 1,
+  // Legacy values (backward compat)
+  ECNL: 4, Girls_Academy: 4, ECNL_RL: 3, USYS_National_League: 3, Elite_Local: 2, Other: 1,
 };
 
 // Deterministic market readiness computation (replaces LLM guess)
@@ -52,40 +53,36 @@ function getVisibilityTier(profile: PlayerProfile): number {
     : null;
   if (!latestSeason) return 1;
 
-  const isMale = profile.gender === 'Male';
-  let highest = 1;
-  for (const league of latestSeason.league) {
-    let t = 1;
-    if (isMale) {
-      if (league === 'MLS_NEXT') t = 5;
-      else if (league === 'ECNL') t = 4;
-      else if (league === 'ECNL_RL' || league === 'USYS_National_League') t = 3;
-      else if (league === 'Elite_Local') t = 2;
-    } else {
-      if (league === 'ECNL') t = 5;
-      else if (league === 'Girls_Academy') t = 4;
-      else if (league === 'ECNL_RL' || league === 'USYS_National_League') t = 3;
-      else if (league === 'Elite_Local') t = 2;
-    }
-    highest = Math.max(highest, t);
+  // New format: single competitiveLevel field
+  if (latestSeason.competitiveLevel) {
+    return LEVEL_TIER[latestSeason.competitiveLevel] || 1;
   }
-  return highest;
+  // Legacy format: league array - pick highest
+  if (latestSeason.league) {
+    let highest = 1;
+    for (const league of latestSeason.league) {
+      highest = Math.max(highest, LEVEL_TIER[league] || 1);
+    }
+    return highest;
+  }
+  return 1;
 }
 
 // Base visibility scores [D1, D2, D3, NAIA, JUCO] — must match api/analyze.ts prompt
+// Cascading rule: D1 <= D2 <= D3 <= NAIA <= JUCO
 const BASE_BOYS: Record<number, number[]> = {
-  5: [55, 80, 55, 80, 90],  // MLS NEXT
-  4: [42, 72, 55, 75, 88],  // ECNL
-  3: [15, 60, 65, 70, 80],  // High (ECNL RL, USYS NL)
-  2: [8, 35, 60, 55, 65],   // Mid
-  1: [5, 20, 40, 45, 60],   // Low
+  5: [55, 80, 82, 85, 90],  // Top Elite (MLS NEXT) / Professional
+  4: [42, 72, 75, 80, 88],  // Elite (ECNL/GA, Semi-Professional)
+  3: [15, 60, 65, 70, 80],  // High (ECNL RL/USYS/USL, Amateur)
+  2: [8, 35, 55, 60, 70],   // Mid (NPL/Regional)
+  1: [5, 20, 40, 45, 60],   // Low (HS/Local/Recreational)
 };
 const BASE_GIRLS: Record<number, number[]> = {
-  5: [60, 85, 60, 85, 95],  // ECNL
-  4: [55, 80, 58, 80, 92],  // GA
-  3: [20, 68, 73, 78, 88],  // High
-  2: [10, 40, 68, 60, 70],  // Mid
-  1: [8, 25, 52, 52, 65],   // Low
+  5: [60, 85, 87, 90, 95],  // Top Elite / Professional
+  4: [55, 80, 82, 85, 92],  // Elite (ECNL/GA, Semi-Professional)
+  3: [20, 68, 73, 78, 88],  // High (Amateur)
+  2: [10, 40, 62, 68, 75],  // Mid
+  1: [8, 25, 52, 55, 65],   // Low
 };
 
 // Outreach multiplier — mirrors api/analyze.ts Step H
@@ -176,8 +173,12 @@ function computeVerifiedReadiness(profile: PlayerProfile, readiness: { athletic:
 
   let highestTier = 1;
   if (latestSeason) {
-    for (const league of latestSeason.league) {
-      highestTier = Math.max(highestTier, LEAGUE_TIER[league] || 1);
+    if (latestSeason.competitiveLevel) {
+      highestTier = LEVEL_TIER[latestSeason.competitiveLevel] || 1;
+    } else if (latestSeason.league) {
+      for (const league of latestSeason.league) {
+        highestTier = Math.max(highestTier, LEVEL_TIER[league] || 1);
+      }
     }
   }
 

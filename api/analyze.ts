@@ -11,7 +11,7 @@ You receive one JSON object that contains:
 - biographical and physical data (name, gender, dateOfBirth, gradYear, height, dominantFoot, positions, state, citizenship, experienceLevel)
 - academic data (unweightedGpa, test scores if present)
 - athletic self assessment (speed, strength, endurance, workRate, technical, tactical rated on Below Average, Average, Above Average, Top 10%, Elite)
-- soccer resume (list of seasons with league names, role, minutesPct, stats, honors)
+- soccer resume (list of seasons with competitiveLevel, optional leagueName, role, minutesPct, stats, honors)
 - market data (videoType, coachesContacted, coachesResponded, offersReceived, camps or showcases attended)
 
 Your job is to:
@@ -21,35 +21,38 @@ Your job is to:
 
 Follow this simple scoring model exactly.
 
-A - Classify league tier
-- Look at the latest season and use the highest level league the player is currently in.
-- **Handling 'Other'**: If the league is 'Other', verify 'otherLeagueName' or 'teamName'. If it sounds like a top academy, treat as 'Mid'. If unknown, treat as 'Low'.
+A - Classify competitive tier
+- Look at the latest season's 'competitiveLevel' field. This is a single value (not an array).
+- The competitiveLevel directly maps to a tier. No guessing needed.
 
-For boys:
-- Top Elite boys - MLS NEXT
-- Elite boys - ECNL Boys
-- High boys - ECNL Regional League, USYS National League, USYS Elite 64, USL Academy
-- Mid boys - NPL and strong regional or state premier leagues
-- Low boys - local travel leagues, house leagues, high school only
+**Named North American Youth Leagues:**
+- "MLS_NEXT" -> Top Elite
+- "ECNL_GA" -> Elite
+- "ECNL_RL_USYS_USL" -> High
+- "NPL_Regional" -> Mid
+- "High_School" -> Low
+- "Local_Recreational" -> Low
 
-For girls:
-- Top Elite girls - ECNL Girls
-- Elite girls - Girls Academy
-- High girls - ECNL Regional League, USYS National League, USYS Elite 64, USL Academy
-- Mid girls - NPL and strong regional or state premier leagues
-- Low girls - local travel leagues, house leagues, high school only
+**Generic Competition Levels (international, US adult, etc.):**
+- "Professional" -> Professional (new tier ABOVE Top Elite)
+- "Semi_Professional" -> Elite
+- "Amateur" -> High
+- "Recreational" -> Low
 
-If they have multiple leagues in the latest year, pick the highest tier.
+**Backward compatibility:** If the data has old-format 'league' array instead of 'competitiveLevel', map as follows:
+- "MLS_NEXT" -> Top Elite, "ECNL" or "Girls_Academy" -> Elite, "ECNL_RL" or "USYS_National_League" -> High, "Elite_Local" -> Mid, "High_School" -> Low, "Other" -> check 'otherLeagueName' context and map to Mid if unknown.
+
+The optional 'leagueName' field (e.g. "UPSL", "Regionalliga West", "FC Koln ITP") is for your narrative only. Do NOT use it to override the tier - the player already classified their competition level.
 
 B - Classify ability band
 Use both self assessment and role plus minutes.
 
 1 - Start from self ratings WITH league-tier cap:
 Self-assessment is unreliable without verification. Cap the effective self-rating based on league tier BEFORE computing ability band:
-- Top Elite / Elite tier (MLS NEXT, ECNL, GA): Self-ratings taken at face value.
-- High tier (ECNL RL, USYS NL, Elite 64): Cap any "Elite" self-rating down to "Top 10%" before evaluating.
-- Mid tier (NPL, regional): Cap any "Elite" to "Above Average" and "Top 10%" to "Above Average".
-- Low tier (local/HS): Cap any "Elite" or "Top 10%" to "Above Average" and "Above Average" to "Average".
+- Professional / Top Elite / Elite tier (Professional, MLS NEXT, ECNL/GA, Semi-Professional): Self-ratings taken at face value.
+- High tier (ECNL RL/USYS/USL, Amateur): Cap any "Elite" self-rating down to "Top 10%" before evaluating.
+- Mid tier (NPL/Regional): Cap any "Elite" to "Above Average" and "Top 10%" to "Above Average".
+- Low tier (HS/Local/Recreational): Cap any "Elite" or "Top 10%" to "Above Average" and "Above Average" to "Average".
 
 After applying the cap:
 - If most (capped) categories are Top 10% or Elite - start ability band as High.
@@ -88,19 +91,23 @@ You will score each level on a 0 to 100 scale before market adjustments.
 
 Girls have more total opportunity at every level. This is already reflected in the higher base scores below.
 
+**CASCADING RULE (CRITICAL)**: For every tier, scores MUST cascade: D1 <= D2 <= D3 <= NAIA <= JUCO. If you can compete at D1, you can compete at every level below it.
+
 For boys, base visibility:
-Top Elite boys (MLS NEXT): D1: 55, D2: 80, D3: 55, NAIA: 80, JUCO: 90
-Elite boys (ECNL Boys): D1: 42, D2: 72, D3: 55, NAIA: 75, JUCO: 88
-High boys (ECNL RL, USYS NL, Elite 64): D1: 15, D2: 60, D3: 65, NAIA: 70, JUCO: 80
-Mid boys (NPL, regional): D1: 8, D2: 35, D3: 60, NAIA: 55, JUCO: 65
-Low boys (local/HS): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
+Professional boys: D1: 80, D2: 90, D3: 92, NAIA: 95, JUCO: 98
+Top Elite boys (MLS NEXT): D1: 55, D2: 80, D3: 82, NAIA: 85, JUCO: 90
+Elite boys (ECNL/GA, Semi-Professional): D1: 42, D2: 72, D3: 75, NAIA: 80, JUCO: 88
+High boys (ECNL RL/USYS/USL, Amateur): D1: 15, D2: 60, D3: 65, NAIA: 70, JUCO: 80
+Mid boys (NPL/Regional): D1: 8, D2: 35, D3: 55, NAIA: 60, JUCO: 70
+Low boys (HS/Local/Recreational): D1: 5, D2: 20, D3: 40, NAIA: 45, JUCO: 60
 
 For girls, base visibility:
-Top Elite girls (ECNL Girls): D1: 60, D2: 85, D3: 60, NAIA: 85, JUCO: 95
-Elite girls (Girls Academy): D1: 55, D2: 80, D3: 58, NAIA: 80, JUCO: 92
-High girls (ECNL RL, USYS NL, Elite 64): D1: 20, D2: 68, D3: 73, NAIA: 78, JUCO: 88
-Mid girls (NPL, regional): D1: 10, D2: 40, D3: 68, NAIA: 60, JUCO: 70
-Low girls (local/HS): D1: 8, D2: 25, D3: 52, NAIA: 52, JUCO: 65
+Professional girls: D1: 85, D2: 92, D3: 94, NAIA: 96, JUCO: 98
+Top Elite girls (MLS NEXT): D1: 60, D2: 85, D3: 87, NAIA: 90, JUCO: 95
+Elite girls (ECNL/GA, Semi-Professional): D1: 55, D2: 80, D3: 82, NAIA: 85, JUCO: 92
+High girls (ECNL RL/USYS/USL, Amateur): D1: 20, D2: 68, D3: 73, NAIA: 78, JUCO: 88
+Mid girls (NPL/Regional): D1: 10, D2: 40, D3: 62, NAIA: 68, JUCO: 75
+Low girls (HS/Local/Recreational): D1: 8, D2: 25, D3: 52, NAIA: 55, JUCO: 65
 
 E - Adjust scores for ability
 
@@ -110,8 +117,9 @@ If a player is qualified for D1/D2, they are automatically qualified for NAIA/JU
 **IMPORTANT**: Ability bonuses scale by league tier. Self-assessed "High" ability in ECNL RL is NOT the same as verified "High" in MLS NEXT.
 
 If ability band is High:
-- Top Elite / Elite tier (MLS NEXT, ECNL, GA): D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
-- High tier: D1: +10, D2: +8, D3: +5, NAIA: +8, JUCO: +5
+- Professional tier: D1: +10, D2: +5, D3: +3, NAIA: +3, JUCO: +2 (already high base, small boost)
+- Top Elite / Elite tier (MLS NEXT, ECNL, GA, Semi-Professional): D1: +15, D2: +10, D3: +5, NAIA: +10, JUCO: +5
+- High tier (Amateur): D1: +10, D2: +8, D3: +5, NAIA: +8, JUCO: +5
 - Mid tier: D1: +5, D2: +5, D3: +5, NAIA: +5, JUCO: +5
 - Low tier: D1: +3, D2: +3, D3: +3, NAIA: +3, JUCO: +3
 
@@ -132,8 +140,8 @@ IMPORTANT: If gamesPlayed is 0 for the latest season, skip this step entirely. A
 
 - If role is Key Starter and minutesPct >= 80 percent: D1: +5, D2: +5
 - If role is Bench and minutesPct <= 20 percent:
-  - **Top Elite / Elite League Exception**: If League is Top Elite or Elite (MLS NEXT/ECNL/GA), a 'Bench' role heavily penalizes D1 (-20) but ONLY slightly penalizes D2/D3 (-5). Reason: An MLS NEXT bench player is often a D2 starter.
-  - **All other leagues**: Bench role penalizes all levels (-10).
+  - **Professional / Top Elite / Elite Exception**: If tier is Professional, Top Elite, or Elite (MLS NEXT, ECNL/GA, Semi-Professional), a 'Bench' role heavily penalizes D1 (-20) but ONLY slightly penalizes D2/D3 (-5). Reason: A bench player at these levels is often a starter at lower divisions.
+  - **All other tiers**: Bench role penalizes all levels (-10).
 
 G2 - Maturity & Experience Bonus (CRITICAL FACTOR)
 College soccer is intense — 18-24 year olds competing together. Coaches heavily favor
@@ -210,21 +218,21 @@ Check the 'honors' field from the player's season entries. Classify the HIGHEST 
 Apply the SINGLE highest honor bonus scaled by league tier:
 
 Tier A (All-America):
-- Top Elite (MLS NEXT): D1: +15, D2: +10, D3: +3, NAIA: +5
-- Elite (ECNL, GA): D1: +10, D2: +8, D3: +3, NAIA: +5
-- High (ECNL RL, USYS NL): D1: +5, D2: +5, D3: +3, NAIA: +3
+- Professional / Top Elite: D1: +15, D2: +10, D3: +3, NAIA: +5
+- Elite (ECNL/GA, Semi-Professional): D1: +10, D2: +8, D3: +3, NAIA: +5
+- High (ECNL RL/USYS/USL, Amateur): D1: +5, D2: +5, D3: +3, NAIA: +3
 - Mid / Low: D1: +2, D2: +2, D3: +2, NAIA: +2
 
 Tier B (All-Conference/Region):
-- Top Elite (MLS NEXT): D1: +10, D2: +8, D3: +2, NAIA: +3
-- Elite (ECNL, GA): D1: +8, D2: +5, D3: +2, NAIA: +3
-- High (ECNL RL, USYS NL): D1: +3, D2: +3, D3: +2, NAIA: +2
+- Professional / Top Elite: D1: +10, D2: +8, D3: +2, NAIA: +3
+- Elite (ECNL/GA, Semi-Professional): D1: +8, D2: +5, D3: +2, NAIA: +3
+- High (ECNL RL/USYS/USL, Amateur): D1: +3, D2: +3, D3: +2, NAIA: +2
 - Mid / Low: D1: +1, D2: +1, D3: +1, NAIA: +1
 
 Tier C (MVP/Other):
-- Top Elite (MLS NEXT): D1: +5, D2: +3, D3: +1, NAIA: +2
-- Elite (ECNL, GA): D1: +3, D2: +2, D3: +1, NAIA: +2
-- High (ECNL RL, USYS NL): D1: +2, D2: +2, D3: +1, NAIA: +1
+- Professional / Top Elite: D1: +5, D2: +3, D3: +1, NAIA: +2
+- Elite (ECNL/GA, Semi-Professional): D1: +3, D2: +2, D3: +1, NAIA: +2
+- High (ECNL RL/USYS/USL, Amateur): D1: +2, D2: +2, D3: +1, NAIA: +1
 - Mid / Low: D1: +1, D2: +1, D3: +1, NAIA: +1
 
 Only count the single highest honor — do NOT stack multiple honors.
@@ -234,14 +242,17 @@ G5 - Height & Position Adjustment
 Parse the player's height. Apply adjustments ONLY for positions where height is a significant D1/D2 factor.
 
 For male players:
-- GK below 6'0": D1: -5, D2: -3. GK below 5'9": D1: -10, D2: -5. GK 6'3" or above: D1: +3.
-- CB below 5'11": D1: -3, D2: -2. CB below 5'8": D1: -8, D2: -5. CB 6'2" or above: D1: +3.
+- GK below 6'0": D1: -5, D2: -3. GK below 5'9": D1: -10, D2: -5.
+- GK 6'3" to 6'4": D1: +3, D2: +2. GK 6'5" to 6'6": D1: +8, D2: +5. GK 6'7" or above: D1: +15, D2: +10, NAIA: +5. (Extreme height is exponentially valuable for GK recruiting.)
+- CB below 5'11": D1: -3, D2: -2. CB below 5'8": D1: -8, D2: -5.
+- CB 6'2" to 6'3": D1: +3, D2: +2. CB 6'4" or above: D1: +5, D2: +3.
 - ST below 5'10": D1: -2. ST below 5'7": D1: -5.
 - All other positions (fullbacks, midfielders, wingers): No height adjustment.
 
 For female players:
-- GK below 5'8": D1: -5, D2: -3. GK 5'11" or above: D1: +3.
-- CB below 5'7": D1: -3, D2: -2. CB 5'10" or above: D1: +3.
+- GK below 5'8": D1: -5, D2: -3.
+- GK 5'11" to 6'0": D1: +3, D2: +2. GK 6'1" or above: D1: +8, D2: +5.
+- CB below 5'7": D1: -3, D2: -2. CB 5'10" or above: D1: +3, D2: +2.
 - All other positions: No height adjustment.
 
 If height is missing or not provided, skip this step entirely (do not penalize).
@@ -279,10 +290,16 @@ I - Action Plan Logic
 - If videoType is "Edited_Highlight_Reel" but outreach is poor, the first item must be about fixing targeting/subject lines.
 - Always align the plan with primary_level (highest visibility). Do not encourage them to chase a level where you gave them less than 15 percent visibility.
 
+**ELIGIBILITY FLAGS (CRITICAL):**
+Check the 'experienceLevel' array for eligibility risks:
+- If experienceLevel includes "Pro_Academy_Reserve": Add a "High" severity keyRisk: "Professional academy contracts may affect NCAA D1/D2 eligibility. Contact the NCAA Eligibility Center to verify your amateur status before pursuing these levels."
+- If experienceLevel includes "Semi_Pro_UPSL_NPSL_WPSL": Add a "Medium" severity keyRisk: "Receiving payment for play may affect NCAA eligibility. Verify your amateur status with the NCAA Eligibility Center."
+- If competitiveLevel is "Professional": Add a "High" severity keyRisk: "Playing in a professional league typically requires an eligibility review for NCAA D1/D2. Your talent level is strong, but verify eligibility before targeting NCAA programs. NAIA and JUCO have more flexible rules."
+
 **CONSTRAINT LOGIC (CRITICAL STEP):**
-You must identify 2-4 "keyRisks" for EVERY player. No player is perfect.
-- **Severity "High"**: Hard blockers preventing ANY success (e.g., No Video, GPA < 2.3, Playing Recreational Only).
-- **Severity "Medium"**: Factors limiting Higher Levels (e.g., "Good GPA (3.2) but not high enough for Ivy League", "League is good but playing time is low", "Height is below average for CB").
+You must identify 2-4 "keyRisks" for EVERY player. No player is perfect. The eligibility flags above count toward this total.
+- **Severity "High"**: Hard blockers preventing ANY success (e.g., No Video, GPA < 2.3, Playing Recreational Only, Eligibility concerns).
+- **Severity "Medium"**: Factors limiting Higher Levels (e.g., "Good GPA (3.2) but not high enough for Ivy League", "League is good but playing time is low", "Height is below average for CB", Semi-Pro eligibility review).
 - **Severity "Low"**: Optimization areas (e.g., "Speed is 'Above Average' but D1 Wingers need 'Elite'", "Outreach volume is low", "Need more variety in video clips").
 
 **Explain the LOGIC in the 'message' field.** Do not just say "GPA". Say "Your 3.2 GPA is solid, but it functionally removes High-Academic D1 schools from your realistic list, reducing your total market by 30%."

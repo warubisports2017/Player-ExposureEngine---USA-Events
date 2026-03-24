@@ -1,5 +1,24 @@
 
 
+// Named North American Youth Leagues
+export type NamedLeague =
+  | "MLS_NEXT"
+  | "ECNL_GA"
+  | "ECNL_RL_USYS_USL"
+  | "NPL_Regional"
+  | "High_School"
+  | "Local_Recreational";
+
+// Generic Competition Levels (international, US adult, etc.)
+export type GenericLevel =
+  | "Professional"
+  | "Semi_Professional"
+  | "Amateur"
+  | "Recreational";
+
+export type CompetitiveLevel = NamedLeague | GenericLevel;
+
+// Legacy type for backward compatibility with old data
 export type YouthLeague =
   | "MLS_NEXT"
   | "ECNL"
@@ -28,15 +47,19 @@ export type VideoType = "None" | "Raw_Game_Footage" | "Edited_Highlight_Reel";
 export interface SeasonStat {
   year: number;
   teamName: string;
-  league: YouthLeague[]; // Changed to array
-  otherLeagueName?: string; // Manual input for "Other" league
-  minutesPlayedPercent: number; // Simplified from raw minutes for better UX
+  competitiveLevel: CompetitiveLevel; // Single-select competitive tier
+  leagueName?: string; // Optional free text for narrative context (e.g. "UPSL", "Regionalliga West")
+  namedLeagueRoute?: boolean; // true = selected from named NA youth leagues, false = generic level
+  // Legacy fields for backward compat with old data
+  league?: YouthLeague[];
+  otherLeagueName?: string;
+  minutesPlayedPercent: number;
   mainRole: "Key_Starter" | "Rotation" | "Bench" | "Injured";
   gamesPlayed: number;
   goals: number;
   assists: number;
-  cleanSheets?: number; // Optional, mainly for GK
-  honors: string; // Comma separated
+  cleanSheets?: number;
+  honors: string;
 }
 
 export interface AcademicProfile {
