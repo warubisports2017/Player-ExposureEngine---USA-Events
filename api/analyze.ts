@@ -274,7 +274,9 @@ H - Apply video and outreach multipliers
 - If videoType is "None": 0.6 (Massive penalty)
 
 2 - Outreach multiplier (check from top to bottom, first match wins):
-- If coachesContacted == 0: tag "Invisible", multiplier 0.7
+- If response rate >= 40 percent AND offersReceived >= 1: tag "Strong Traction", multiplier 1.1
+- Else if response rate >= 40 percent AND coachesContacted >= 5 AND offersReceived == 0: tag "Building Momentum", multiplier 1.05
+- Else if coachesContacted == 0: tag "Invisible", multiplier 0.7
 - Else if coachesContacted >= 20 and response rate < 5 percent: tag "Spamming", multiplier 0.8
 - Else if coachesContacted >= 10 and response rate < 20 percent and offersReceived == 0: tag "Low Traction", multiplier 0.85
 - Else if coachesResponded >= 5 and offersReceived == 0: tag "Talent Gap", multiplier 0.9
