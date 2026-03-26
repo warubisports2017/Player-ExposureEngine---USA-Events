@@ -1,4 +1,4 @@
-import { PlayerProfile, AnalysisResult, VerifiedReadiness, GapFactors, CompetitiveLevel } from "../types";
+import { PlayerProfile, AnalysisResult, VerifiedReadiness, GapFactors, CompetitiveLevel, EstimatedCaliber } from "../types";
 
 const LEVELS = ["D1", "D2", "D3", "NAIA", "JUCO"] as const;
 
@@ -206,6 +206,80 @@ function computeVerifiedReadiness(profile: PlayerProfile, readiness: { athletic:
   return { verified, gapFactors };
 }
 
+// --- Estimated Caliber Score range (maps self-reported data to Caliber system) ---
+// Ranges aligned with league_tier_mappings in Supabase (compute_caliber_score SQL)
+const CALIBER_RANGES: Record<string, [number, number]> = {
+  // Named NA Youth leagues
+  MLS_NEXT: [60, 80], ECNL_GA: [50, 70], ECNL_RL_USYS_USL: [40, 60],
+  NPL_Regional: [30, 50], High_School: [25, 45], Local_Recreational: [15, 30],
+  // Generic levels
+  Professional: [75, 95], Semi_Professional: [55, 75], Amateur: [35, 55], Recreational: [15, 30],
+  // Legacy
+  ECNL: [50, 70], Girls_Academy: [50, 70], ECNL_RL: [40, 60],
+  USYS_National_League: [40, 60], Elite_Local: [30, 50], Other: [20, 40],
+};
+
+const CALIBER_LABELS: { min: number; label: string }[] = [
+  { min: 80, label: 'Elite' },
+  { min: 65, label: 'Strong' },
+  { min: 50, label: 'Solid' },
+  { min: 35, label: 'Development' },
+  { min: 0, label: 'Unproven' },
+];
+
+function computeEstimatedCaliber(profile: PlayerProfile): EstimatedCaliber {
+  const latestSeason = profile.seasons.length > 0
+    ? profile.seasons.reduce((a, b) => b.year >= a.year ? b : a)
+    : null;
+
+  let rangeLow = 20, rangeHigh = 40; // default for no data
+
+  if (latestSeason) {
+    // Get base range from competitive level
+    const level = latestSeason.competitiveLevel;
+    if (level && CALIBER_RANGES[level]) {
+      [rangeLow, rangeHigh] = CALIBER_RANGES[level];
+    } else if (latestSeason.league) {
+      // Legacy: pick highest league
+      for (const league of latestSeason.league) {
+        const r = CALIBER_RANGES[league];
+        if (r && r[1] > rangeHigh) {
+          [rangeLow, rangeHigh] = r;
+        }
+      }
+    }
+
+    // Narrow range based on stats (starter + stats push toward top of range)
+    const gamesPlayed = latestSeason.gamesPlayed || 0;
+    const goals = latestSeason.goals || 0;
+    const assists = latestSeason.assists || 0;
+    const minutesPct = latestSeason.minutesPlayedPercent || 0;
+
+    // If strong playing time and production, push toward upper range
+    if (minutesPct >= 70 && gamesPlayed >= 15) {
+      const ga = goals + assists;
+      const gaPerGame = gamesPlayed > 0 ? ga / gamesPlayed : 0;
+      if (gaPerGame >= 0.5) {
+        rangeLow = Math.round(rangeLow + (rangeHigh - rangeLow) * 0.3);
+      }
+    }
+    // If bench player, push toward lower range
+    if (latestSeason.mainRole === 'Bench' || latestSeason.mainRole === 'Injured') {
+      rangeHigh = Math.round(rangeLow + (rangeHigh - rangeLow) * 0.6);
+    }
+  }
+
+  // Clamp
+  rangeLow = clamp(rangeLow, 0, 100);
+  rangeHigh = clamp(rangeHigh, rangeLow, 100);
+
+  // Label based on midpoint
+  const mid = Math.round((rangeLow + rangeHigh) / 2);
+  const label = CALIBER_LABELS.find(t => mid >= t.min)?.label || 'Unproven';
+
+  return { rangeLow, rangeHigh, label, confidence: 'low' };
+}
+
 function validateAndNormalize(raw: any): AnalysisResult {
   // Ensure visibilityScores is an array with all 5 levels
   let vis = Array.isArray(raw.visibilityScores) ? raw.visibilityScores : [];
@@ -289,6 +363,9 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
   const { verified, gapFactors } = computeVerifiedReadiness(profile, result.readinessScore);
   result.verifiedReadiness = verified;
   result.gapFactors = gapFactors;
+
+  // Compute estimated Caliber Score range (deterministic)
+  result.estimatedCaliber = computeEstimatedCaliber(profile);
 
   return result;
 };

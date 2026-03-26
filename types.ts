@@ -172,11 +172,19 @@ export interface GapFactors {
   leagueLabel: string;
 }
 
+export interface EstimatedCaliber {
+  rangeLow: number;
+  rangeHigh: number;
+  label: string; // 'Elite' | 'Strong' | 'Solid' | 'Development' | 'Unproven'
+  confidence: 'low' | 'medium';
+}
+
 export interface AnalysisResult {
   visibilityScores: VisibilityScore[];
   readinessScore: ReadinessScore;
   verifiedReadiness?: VerifiedReadiness;
   gapFactors?: GapFactors;
+  estimatedCaliber?: EstimatedCaliber;
   keyStrengths: string[];
   keyRisks: RiskFlag[];
   actionPlan: ActionItem[];

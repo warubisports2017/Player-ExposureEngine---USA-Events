@@ -68,6 +68,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
   const visibilityScores = result.visibilityScores || [];
   const keyRisks = result.keyRisks || [];
   const rawActionPlan = result.actionPlan || [];
+  const estimatedCaliber = result.estimatedCaliber;
   const funnelAnalysis = result.funnelAnalysis || {
     stage: 'Evaluation', conversionRate: '0%', bottleneck: 'Unknown', advice: 'Review data'
   };
@@ -540,6 +541,66 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
               {result.plainLanguageSummary}
             </p>
           </div>
+
+          {/* Estimated Caliber Score */}
+          {estimatedCaliber && (
+            <div data-pdf-section className="bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-emerald-900/10 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-emerald-200/50 dark:border-emerald-500/10 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
+                  Estimated Caliber Score
+                </h3>
+                <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-500/20">
+                  Based on self-reported data
+                </span>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className={`text-4xl md:text-5xl font-black tracking-tight ${
+                  estimatedCaliber.label === 'Elite' ? 'text-emerald-500' :
+                  estimatedCaliber.label === 'Strong' ? 'text-green-500' :
+                  estimatedCaliber.label === 'Solid' ? 'text-yellow-500' :
+                  estimatedCaliber.label === 'Development' ? 'text-orange-500' :
+                  'text-red-400'
+                }`}>
+                  {estimatedCaliber.rangeLow}-{estimatedCaliber.rangeHigh}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-bold uppercase tracking-wider mb-1 ${
+                    estimatedCaliber.label === 'Elite' ? 'text-emerald-500' :
+                    estimatedCaliber.label === 'Strong' ? 'text-green-500' :
+                    estimatedCaliber.label === 'Solid' ? 'text-yellow-500' :
+                    estimatedCaliber.label === 'Development' ? 'text-orange-500' :
+                    'text-red-400'
+                  }`}>
+                    {estimatedCaliber.label}
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    The Caliber Score measures football quality on a universal 0-100 scale.
+                    Your estimated range is based on self-reported data.
+                    Join the Athletes USA network for a verified, precise score.
+                  </p>
+                </div>
+              </div>
+              {/* Caliber scale bar */}
+              <div className="mt-5 pt-4 border-t border-slate-200/50 dark:border-slate-700/30">
+                <div className="flex items-center gap-1 h-3 rounded-full overflow-hidden">
+                  <div className="h-full flex-1 bg-red-300 dark:bg-red-500/30 rounded-l-full" title="0-34 Unproven" />
+                  <div className="h-full flex-1 bg-orange-300 dark:bg-orange-500/30" title="35-49 Development" />
+                  <div className="h-full flex-1 bg-yellow-300 dark:bg-yellow-500/30" title="50-64 Solid" />
+                  <div className="h-full flex-1 bg-green-300 dark:bg-green-500/30" title="65-79 Strong" />
+                  <div className="h-full flex-1 bg-emerald-400 dark:bg-emerald-500/30 rounded-r-full" title="80-100 Elite" />
+                </div>
+                <div className="flex justify-between mt-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                  <span>0</span>
+                  <span>35</span>
+                  <span>50</span>
+                  <span>65</span>
+                  <span>80</span>
+                  <span>100</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* New Player Readiness Pillars */}
           <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
