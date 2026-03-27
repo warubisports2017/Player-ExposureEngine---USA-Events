@@ -79,6 +79,10 @@ export async function createScoutProspect(profile: any, result: any): Promise<vo
       visibility_scores: Object.fromEntries(
         visScores.map((v: any) => [v.level, v.visibilityPercent])
       ),
+      caliberMin: result.estimatedCaliber?.rangeLow ?? null,
+      caliberMax: result.estimatedCaliber?.rangeHigh ?? null,
+      caliberLabel: result.estimatedCaliber?.label ?? null,
+      caliberConfidence: result.estimatedCaliber?.confidence ?? null,
     },
 
     // Optional fields - fill what we have
