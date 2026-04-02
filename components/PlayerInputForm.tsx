@@ -987,7 +987,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                       onChange={(e) => updateSeason(idx, 'year', parseInt(e.target.value))}
                     />
                  </div>
-                 <div className="col-span-1 md:col-span-2">
+                 <div className="col-span-2 md:col-span-2">
                     <Label>Competitive Level</Label>
                     <CompetitiveLevelSelect
                       value={season.competitiveLevel || 'ECNL_GA'}
