@@ -44,6 +44,7 @@
         capture_pageleave: true,
         session_recording: { maskAllInputs: false, maskInputFn: function(text, element) { if (element?.type === 'password') return '*'.repeat(text.length); return text; } }
       })
+      if (localStorage.getItem('ph_internal') === '1') posthog.opt_out_capturing()
     </script>
 </head>
   <body>
