@@ -257,14 +257,26 @@ For female players:
 
 If height is missing or not provided, skip this step entirely (do not penalize).
 
-D1 HARD CAP (CRITICAL):
-After ALL bonus steps (D through G5), apply a hard cap on D1:
-- If offersReceived >= 3: D1 cap = 100 (no cap)
-- If offersReceived >= 1: D1 cap = 96
-- Otherwise: D1 cap = 92
-If D1 score exceeds the cap, clamp it down. This ensures no player reaches D1 near-100 without actual offers from coaches.
+D1 GUARDRAILS (CRITICAL - READ CAREFULLY):
 
-After all adjustments and the D1 cap, clamp each level score between 0 and 100. Call this "on_paper_fit".
+**Guardrail 1: Tier-Based D1 Maximum**
+No matter how many bonuses stack, D1 CANNOT exceed these maximums based on competitive tier:
+- Low (HS/Local/Recreational): D1 max 30
+- Mid (NPL/Regional): D1 max 50
+- High (ECNL RL/USYS/USL, Amateur): D1 max 65
+- Elite (ECNL/GA, Semi-Professional): D1 max 80
+- Top Elite (MLS NEXT): D1 max 92
+- Professional: D1 max 100
+If D1 exceeds the tier max after bonuses, REDUCE it to the tier max.
+
+**Guardrail 2: Offers Ceiling (CEILING ONLY - NEVER INCREASE)**
+This is a CEILING, not a floor. If the calculated D1 is BELOW the ceiling, LEAVE IT UNCHANGED. Only REDUCE D1 if it EXCEEDS the ceiling.
+- If offersReceived >= 3: ceiling = 100
+- If offersReceived >= 1: ceiling = 96
+- Otherwise: ceiling = 92
+EXAMPLE: A High-tier player (ECNL RL) with 2 offers and calculated D1 = 28. D1 stays 28, NOT 96. The ceiling of 96 only matters if D1 were already above 96.
+
+Apply Guardrail 1 first, then Guardrail 2. After both, clamp each level between 0 and 100. Call this "on_paper_fit".
 
 H - Apply video and outreach multipliers
 
@@ -553,6 +565,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!text) throw new Error('No response from AI');
 
       const result = JSON.parse(text);
+
+      // --- Server-side D1 score validation ---
+      // Prevent Gemini from inflating D1 beyond tier-realistic maximums
+      const TIER_D1_MAX: Record<string, number> = {
+        High_School: 30, Local_Recreational: 30, Recreational: 30,
+        NPL_Regional: 50,
+        ECNL_RL_USYS_USL: 65, Amateur: 65,
+        ECNL_GA: 80, Semi_Professional: 80,
+        MLS_NEXT: 92,
+        Professional: 100,
+      };
+
+      if (Array.isArray(profile.seasons) && profile.seasons.length > 0 && Array.isArray(result.visibilityScores)) {
+        const latestSeason = profile.seasons.reduce((a: any, b: any) =>
+          (b.year || 0) > (a.year || 0) ? b : a
+        );
+        const compLevel = latestSeason?.competitiveLevel;
+        const maxD1 = TIER_D1_MAX[compLevel] ?? 100;
+
+        const d1Entry = result.visibilityScores.find((s: any) => s.level === 'D1');
+        if (d1Entry && d1Entry.visibilityPercent > maxD1) {
+          console.warn(`D1 score ${d1Entry.visibilityPercent} clamped to tier max ${maxD1} for ${compLevel}`);
+          d1Entry.visibilityPercent = maxD1;
+        }
+      }
 
       // Create prospect in scout's pipeline if referral (awaited so Vercel doesn't kill it)
       if (profile.referralScoutId) {
