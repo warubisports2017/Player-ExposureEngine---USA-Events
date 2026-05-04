@@ -1,3 +1,4 @@
+import '../lib/sentry';
 /**
  * Serverless function to submit feedback to Athletes USA Supabase.
  * Cross-project write using submit_external_feedback RPC (same pattern as ITP Hub).

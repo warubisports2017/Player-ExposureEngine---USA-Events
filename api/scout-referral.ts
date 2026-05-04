@@ -1,3 +1,4 @@
+import '../lib/sentry';
 /**
  * Scout Referral - Creates a prospect in the scout's pipeline
  * when a player completes an Exposure Engine analysis via ?ref=<scoutId>
