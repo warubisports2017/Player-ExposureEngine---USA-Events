@@ -11,6 +11,9 @@ if (process.env.SENTRY_DSN && !globalThis.__sentry_inited_exposure_engine) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.VERCEL_ENV || 'development',
+    // Vercel auto-injects VERCEL_GIT_COMMIT_SHA. Tags every event with the
+    // commit so Sentry can auto-resolve "fixed in release X" issues.
+    release: process.env.VERCEL_GIT_COMMIT_SHA,
     tracesSampleRate: 0.1,
     sendDefaultPii: false,
   });
