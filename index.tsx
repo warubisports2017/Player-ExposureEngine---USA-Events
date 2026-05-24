@@ -1,8 +1,35 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
+import posthog from 'posthog-js';
+import { buildPostHogOptions } from './src/lib/posthog-scrub';
 import './src/index.css';
 import App from './App';
+
+// PostHog client init with PII scrub. Replaces the inline snippet that
+// previously lived in index.html (leaked any URL-embedded params via
+// $current_url + $referrer). Public-facing app with no auth → autocapture
+// only, no identify, no allowPII opt-in. Same project as the rest of the
+// Warubi network (370781). GA4 stays in index.html (server-side, no PII).
+posthog.init('phc_ye5SfajjJFkrj8C8cExzZG34ft4Xha8LjNiHc6RYaavL', buildPostHogOptions({
+  api_host: 'https://us.i.posthog.com',
+  person_profiles: 'identified_only',
+  autocapture: true,
+  capture_pageview: true,
+  capture_pageleave: true,
+  session_recording: {
+    maskAllInputs: false,
+    maskInputFn: (text: string, element?: HTMLElement) => {
+      if ((element as HTMLInputElement | undefined)?.type === 'password') {
+        return '*'.repeat(text.length);
+      }
+      return text;
+    },
+  },
+}));
+if (typeof window !== 'undefined' && localStorage.getItem('ph_internal') === '1') {
+  posthog.opt_out_capturing();
+}
 
 // Sentry client init - silently no-ops when VITE_SENTRY_DSN is unset
 // (local dev, preview branches without DSN). Production gets the DSN via
