@@ -17,6 +17,7 @@
     "html2canvas-pro": "^1.6.7",
     "jspdf": "^4.1.0",
     "lucide-react": "^0.555.0",
+    "posthog-js": "^1.376.0",
     "preact": "^10.28.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
