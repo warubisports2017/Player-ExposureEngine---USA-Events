@@ -555,7 +555,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        // gemini-3.1-flash-lite-preview was decommissioned (Google returns 404 ->
+        // generateContent threw -> 502). gemini-3.1-flash-lite is the stable successor
+        // (cheapest tier, $0.25/$1.50 per 1M; the score is partly deterministic so lite
+        // is the right fit). Env-var override so swapping models (e.g. A/B gemini-3.5-flash)
+        // is a Vercel toggle, not a code deploy.
+        model: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
         contents: { parts: [{ text: userPrompt }] },
         config: {
           responseMimeType: 'application/json',
