@@ -1,4 +1,6 @@
-import '../lib/sentry';
+// NOTE: do NOT `import '../lib/sentry'` here. @sentry/node v10's OTel auto-
+// instrumentation, when bundled into a serverless fn that also loads @google/genai,
+// crashes the fn at module load (FUNCTION_INVOCATION_FAILED). See lib/sentry.ts.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type } from '@google/genai';
 

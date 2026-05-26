@@ -1,4 +1,6 @@
-import '../lib/sentry';
+// NOTE: do NOT `import '../lib/sentry'` here. @sentry/node v10's OTel auto-
+// instrumentation, when bundled into a serverless fn that also loads
+// @supabase/supabase-js, crashes the fn at module load. See lib/sentry.ts.
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''

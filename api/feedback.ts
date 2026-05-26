@@ -1,4 +1,6 @@
-import '../lib/sentry';
+// NOTE: do NOT `import '../lib/sentry'` here. @sentry/node v10's OTel auto-
+// instrumentation, when bundled into a serverless fn that also loads
+// @supabase/supabase-js, crashes the fn at module load. See lib/sentry.ts.
 /**
  * Serverless function to submit feedback to Athletes USA Supabase.
  * Cross-project write using submit_external_feedback RPC (same pattern as ITP Hub).
