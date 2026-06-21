@@ -15,11 +15,21 @@ declare global {
   }
 }
 
-const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-fade-in print:hidden">
-    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col relative animate-slide-up">
-      <button 
+const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+  <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-fade-in print:hidden">
+    <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col relative animate-slide-up">
+      <button
         onClick={onClose}
+        aria-label="Close"
         className="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
       >
         <X className="w-5 h-5" />
@@ -79,6 +89,10 @@ const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
                  <span className="font-bold text-amber-700 dark:text-amber-400 block">70-89%</span>
                  Possible. Needs optimization.
               </div>
+              <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded border border-orange-200 dark:border-orange-500/20">
+                 <span className="font-bold text-orange-700 dark:text-orange-400 block">50-69%</span>
+                 Reach. Significant gaps to close.
+              </div>
               <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded border border-red-200 dark:border-red-500/20">
                  <span className="font-bold text-red-700 dark:text-red-400 block">&lt; 50%</span>
                  Misalignment / Blocker.
@@ -88,7 +102,8 @@ const MethodologyOverlay = ({ onClose }: { onClose: () => void }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const App: React.FC = () => {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
@@ -130,7 +145,7 @@ const App: React.FC = () => {
 
     // GA4: Lead captured
     window.gtag?.('event', 'generate_lead', {
-      site: 'exposure-engine-olive.vercel.app',
+      site: 'app.warubi-sports.com',
       form_name: 'player_visibility_assessment',
     });
 
@@ -144,7 +159,7 @@ const App: React.FC = () => {
 
       // GA4: Analysis completed
       window.gtag?.('event', 'analysis_complete', {
-        site: 'exposure-engine-olive.vercel.app',
+        site: 'app.warubi-sports.com',
         form_name: 'visibility_calculator',
         sport: 'soccer',
       });
@@ -195,11 +210,7 @@ const App: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error("Analysis Error Details:", err);
-      let errorMessage = "Failed to analyze profile. Please check your API key and try again.";
-      if (err instanceof Error) {
-        errorMessage += ` (${err.message})`;
-      }
-      setError(errorMessage);
+      setError("We couldn't generate your analysis right now. Please try again in a moment.");
     } finally {
       setIsLoading(false);
     }
@@ -220,7 +231,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <Header toggleTheme={toggleTheme} isDark={theme === 'dark'} />
+      <Header toggleTheme={toggleTheme} isDark={theme === 'dark'} onLogoClick={handleReset} />
       
       <main className="relative z-10 max-w-4xl mx-auto px-4 py-12">
         {error && (

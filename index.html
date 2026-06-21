@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
+    <script>
+      // Set theme before paint to avoid FOUC (flash of wrong theme).
+      try { var t = localStorage.getItem('theme'); if(!t){ t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } document.documentElement.classList.toggle('dark', t === 'dark'); } catch(e){}
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Google Analytics -->
@@ -12,6 +16,21 @@
       gtag('config', 'G-ZTP3RQH4KF', { send_page_view: true });
     </script>
     <title>ExposureEngine</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Get an honest, data-driven visibility score and a 90-day plan for US college soccer recruitment - based on your league, minutes, grades, and video.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ExposureEngine">
+    <meta property="og:title" content="ExposureEngine | College Soccer Recruiting Visibility">
+    <meta property="og:description" content="Get an honest, data-driven visibility score and a 90-day plan for US college soccer recruitment - based on your league, minutes, grades, and video.">
+    <meta property="og:url" content="https://app.warubi-sports.com/">
+    <meta property="og:image" content="https://app.warubi-sports.com/apple-touch-icon.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="ExposureEngine | College Soccer Recruiting Visibility">
+    <meta name="twitter:description" content="Get an honest, data-driven visibility score and a 90-day plan for US college soccer recruitment - based on your league, minutes, grades, and video.">
+    <meta name="twitter:image" content="https://app.warubi-sports.com/apple-touch-icon.png">
     <style>
       body{background-color:#020617;margin:0}
       html.dark{color-scheme:dark}

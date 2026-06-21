@@ -367,6 +367,122 @@ Map your calculated values from the steps above to these fields:
 Return ONLY valid JSON.
 `;
 
+// --- Enum -> human label map (EE-092) ---
+// The raw ENUM tokens (e.g. "MLS_NEXT") leak into player-facing copy when the
+// model echoes the profile values verbatim. We humanize the values BEFORE they
+// reach the model, and defensively scrub any that still survive in the output.
+// NOTE: this map is for PROMPT/OUTPUT TEXT ONLY. The raw enum values are kept
+// unchanged for every scoring/lookup path (TIER_D1_MAX clamp, createScoutProspect,
+// etc.). Labels mirror constants.ts (COMPETITIVE_LEVEL_LABELS + form labels).
+const ENUM_LABELS: Record<string, string> = {
+  // Competitive levels (named NA youth leagues)
+  MLS_NEXT: 'MLS NEXT',
+  ECNL_GA: 'ECNL / Girls Academy',
+  ECNL_RL_USYS_USL: 'ECNL RL / USYS National League / USL Academy',
+  NPL_Regional: 'NPL / Regional Premier',
+  High_School: 'High School',
+  Local_Recreational: 'Local / Recreational',
+  // Competitive levels (generic)
+  Professional: 'Professional League',
+  Semi_Professional: 'Semi-Professional League',
+  Amateur: 'Amateur League',
+  Recreational: 'Recreational / Casual',
+  // Legacy YouthLeague array tokens (backward compat)
+  ECNL: 'ECNL',
+  Girls_Academy: 'Girls Academy',
+  ECNL_RL: 'ECNL RL',
+  USYS_National_League: 'USYS National League',
+  Elite_Local: 'Elite Local',
+  Other: 'Other',
+  // Experience levels (multi-select maturity)
+  Youth_Club_Only: 'Youth Club Only',
+  High_School_Varsity: 'High School Varsity',
+  Adult_Amateur_League: 'Adult Amateur League',
+  Semi_Pro_UPSL_NPSL_WPSL: 'Semi-Pro (UPSL / NPSL / WPSL)',
+  International_Academy_U19: 'International Academy (U19)',
+  Pro_Academy_Reserve: 'Pro Academy / Reserve',
+};
+
+// Tokens to scrub from output text. Ordered longest-first so multi-segment tokens
+// (e.g. ECNL_RL_USYS_USL) are replaced before their shorter substrings (ECNL_RL).
+const ENUM_TOKENS_BY_LENGTH = Object.keys(ENUM_LABELS).sort((a, b) => b.length - a.length);
+
+function humanizeLevel(token: any): any {
+  return typeof token === 'string' && ENUM_LABELS[token] ? ENUM_LABELS[token] : token;
+}
+
+// Returns a DISPLAY-ONLY deep copy of the profile with the competitive/experience
+// enum tokens humanized, so the model never sees raw underscore tokens to echo.
+// The original profile object is never mutated.
+function humanizeProfileForPrompt(profile: any): any {
+  const copy = JSON.parse(JSON.stringify(profile));
+  if (Array.isArray(copy.experienceLevel)) {
+    copy.experienceLevel = copy.experienceLevel.map(humanizeLevel);
+  }
+  if (Array.isArray(copy.seasons)) {
+    copy.seasons = copy.seasons.map((s: any) => {
+      if (!s || typeof s !== 'object') return s;
+      const next = { ...s };
+      if (next.competitiveLevel) next.competitiveLevel = humanizeLevel(next.competitiveLevel);
+      if (Array.isArray(next.league)) next.league = next.league.map(humanizeLevel);
+      return next;
+    });
+  }
+  return copy;
+}
+
+// Replace any known enum token left in a human-readable string with its label.
+// Only touches the SPECIFIC known tokens (never blindly strips underscores).
+function scrubEnumTokens(text: any): any {
+  if (typeof text !== 'string') return text;
+  let out = text;
+  for (const token of ENUM_TOKENS_BY_LENGTH) {
+    if (out.includes(token)) {
+      // Word-boundary-ish replace: token surrounded by non-word chars (or string edges).
+      const re = new RegExp(`(^|[^A-Za-z0-9_])${token}(?![A-Za-z0-9_])`, 'g');
+      out = out.replace(re, (_m, pre) => `${pre}${ENUM_LABELS[token]}`);
+    }
+  }
+  return out;
+}
+
+// Defensive post-process: sanitize ONLY the human-readable text fields of the
+// model result. Numeric fields are never touched.
+function sanitizeResultText(result: any): void {
+  if (!result || typeof result !== 'object') return;
+  result.plainLanguageSummary = scrubEnumTokens(result.plainLanguageSummary);
+  result.coachShortEvaluation = scrubEnumTokens(result.coachShortEvaluation);
+
+  if (Array.isArray(result.keyStrengths)) {
+    result.keyStrengths = result.keyStrengths.map(scrubEnumTokens);
+  }
+  if (Array.isArray(result.keyRisks)) {
+    result.keyRisks.forEach((r: any) => {
+      if (r && typeof r === 'object') r.message = scrubEnumTokens(r.message);
+    });
+  }
+  if (Array.isArray(result.actionPlan)) {
+    result.actionPlan.forEach((a: any) => {
+      if (a && typeof a === 'object') a.description = scrubEnumTokens(a.description);
+    });
+  }
+  if (result.funnelAnalysis && typeof result.funnelAnalysis === 'object') {
+    const f = result.funnelAnalysis;
+    f.bottleneck = scrubEnumTokens(f.bottleneck);
+    f.advice = scrubEnumTokens(f.advice);
+  }
+  if (Array.isArray(result.benchmarkAnalysis)) {
+    result.benchmarkAnalysis.forEach((b: any) => {
+      if (b && typeof b === 'object') b.feedback = scrubEnumTokens(b.feedback);
+    });
+  }
+  if (Array.isArray(result.visibilityScores)) {
+    result.visibilityScores.forEach((v: any) => {
+      if (v && typeof v === 'object') v.notes = scrubEnumTokens(v.notes);
+    });
+  }
+}
+
 // --- Rate Limiting (in-memory per instance) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS = 5;
@@ -545,11 +661,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Call Gemini
   const ai = new GoogleGenAI({ apiKey });
+  // Humanize enum tokens in the profile copy the MODEL sees, so it can't echo raw
+  // underscore tokens (EE-092). The raw `profile` is untouched for all scoring/lookup.
+  const promptProfile = humanizeProfileForPrompt(profile);
   const userPrompt = `
     ${SYSTEM_PROMPT}
 
     **Player Profile Data:**
-    ${JSON.stringify(profile, null, 2)}
+    ${JSON.stringify(promptProfile, null, 2)}
   `;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -598,6 +717,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           d1Entry.visibilityPercent = maxD1;
         }
       }
+
+      // Defensive scrub: replace any raw enum token that survived in human-readable
+      // text fields with its label (EE-092). Numeric fields are never touched.
+      sanitizeResultText(result);
 
       // Create prospect in scout's pipeline if referral (awaited so Vercel doesn't kill it)
       if (profile.referralScoutId) {

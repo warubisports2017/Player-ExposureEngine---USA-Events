@@ -244,6 +244,12 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
   const [showRatingsInfo, setShowRatingsInfo] = useState(false);
   // Info Button State (Offers)
   const [showOffersInfo, setShowOffersInfo] = useState(false);
+
+  // Light submit validation (First Name required; Email optional but must be valid if present)
+  const [firstNameError, setFirstNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   
   // Tip Rotation State
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -491,6 +497,18 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Light validation: First Name required, Email optional but valid if present
+    const trimmedFirstName = (profile.firstName || '').trim();
+    const trimmedEmail = (profile.email || '').trim();
+    const nameErr = trimmedFirstName ? '' : 'Please enter your first name.';
+    const emailErr = trimmedEmail && !isValidEmail(trimmedEmail)
+      ? 'Please enter a valid email, or leave it blank.'
+      : '';
+    setFirstNameError(nameErr);
+    setEmailError(emailErr);
+    if (nameErr || emailErr) return;
+
     // Ensure GPA is a clean number on submit
     const gpaNum = parseFloat(String(profile.academics.gpa));
     const cleanProfile = {
@@ -558,11 +576,17 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
             <input
               type="text"
               required
-              className={inputClass}
+              className={`${inputClass} ${firstNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : ''}`}
               placeholder="e.g. John"
               value={profile.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('firstName', e.target.value);
+                if (firstNameError) setFirstNameError('');
+              }}
             />
+            {firstNameError && (
+              <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 animate-fade-in">{firstNameError}</p>
+            )}
           </div>
           <div>
             <Label>Last Name</Label>
@@ -579,11 +603,17 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
             <Label>Email</Label>
             <input
               type="email"
-              className={inputClass}
+              className={`${inputClass} ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : ''}`}
               placeholder="e.g. john@example.com"
               value={profile.email || ''}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('email', e.target.value);
+                if (emailError) setEmailError('');
+              }}
             />
+            {emailError && (
+              <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 animate-fade-in">{emailError}</p>
+            )}
           </div>
           <div>
             <Label>Gender</Label>
@@ -1272,7 +1302,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
             ) : (
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-xl font-bold text-base md:text-lg flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-900 hover:shadow-lg hover:shadow-emerald-500/25 border border-emerald-400/50 transition-all transform active:scale-[0.99]"
+                  disabled={!(profile.firstName || '').trim()}
+                  className="w-full py-4 rounded-xl font-bold text-base md:text-lg flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-900 hover:shadow-lg hover:shadow-emerald-500/25 border border-emerald-400/50 transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:shadow-none"
                 >
                   Calculate Visibility Score <ChevronRight className="ml-2 w-5 h-5" />
                 </button>

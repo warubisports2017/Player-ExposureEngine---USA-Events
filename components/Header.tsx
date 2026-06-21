@@ -4,13 +4,19 @@ import { Target, Sun, Moon } from 'lucide-react';
 interface HeaderProps {
   toggleTheme: () => void;
   isDark: boolean;
+  onLogoClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ toggleTheme, isDark }) => {
+const Header: React.FC<HeaderProps> = ({ toggleTheme, isDark, onLogoClick }) => {
   return (
     <header className="w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 transition-all duration-300 print:hidden">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3 group cursor-pointer">
+        <button
+          type="button"
+          onClick={onLogoClick}
+          aria-label="ExposureEngine home"
+          className="flex items-center space-x-3 group cursor-pointer text-left rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        >
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500 blur opacity-20 group-hover:opacity-40 transition duration-500 rounded-full"></div>
             <div className="relative p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl">
@@ -21,8 +27,8 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, isDark }) => {
             <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-sans">Exposure<span className="text-emerald-500 dark:text-emerald-400">Engine</span></h1>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase">Powered by Warubi Sports</p>
           </div>
-        </div>
-        
+        </button>
+
         <div className="flex items-center space-x-4">
           <button 
             onClick={toggleTheme}

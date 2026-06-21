@@ -542,6 +542,26 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
             </p>
           </div>
 
+          {/* Key Strengths */}
+          {result.keyStrengths && result.keyStrengths.length > 0 && (
+            <div data-pdf-section className="bg-white dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center">
+                <CheckCircle2 className="w-5 h-5 mr-2 text-emerald-500 dark:text-emerald-400 print:text-emerald-600" />
+                Key Strengths
+              </h3>
+              <div className="space-y-4">
+                {result.keyStrengths.map((strength, idx) => (
+                  <div key={idx} className="p-4 rounded-lg border bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-500/30 flex items-start">
+                    <div className="mt-0.5 mr-3 shrink-0 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{strength}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Estimated Caliber Score */}
           {estimatedCaliber && (
             <div data-pdf-section className="bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/60 dark:to-emerald-900/10 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-emerald-200/50 dark:border-emerald-500/10 shadow-lg dark:shadow-xl print:shadow-none print:border-slate-300 print:bg-white">
@@ -598,6 +618,11 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                   <span>80</span>
                   <span>100</span>
                 </div>
+                {estimatedCaliber.confidence && (
+                  <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                    Confidence: <span className="font-medium capitalize text-slate-500 dark:text-slate-400">{estimatedCaliber.confidence}</span>
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -736,9 +761,15 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     </div>
                     <div className="relative no-print">
                         <button
+                            type="button"
+                            aria-label="What the Visibility Profile measures"
+                            aria-expanded={showVisibilityInfo}
                             onMouseEnter={() => setShowVisibilityInfo(true)}
                             onMouseLeave={() => setShowVisibilityInfo(false)}
-                            className="text-slate-400 hover:text-emerald-500 transition-colors"
+                            onFocus={() => setShowVisibilityInfo(true)}
+                            onBlur={() => setShowVisibilityInfo(false)}
+                            onClick={() => setShowVisibilityInfo((v) => !v)}
+                            className="text-slate-400 hover:text-emerald-500 focus:text-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded transition-colors"
                         >
                             <Info className="w-4 h-4" />
                         </button>
@@ -759,7 +790,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                 </div>
                 
                 <div className="radar-wrap h-[300px] w-full mb-4">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={300} minHeight={300}>
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                       <PolarGrid stroke={isGeneratingPDF ? "#e2e8f0" : (isDark ? "#334155" : "#e2e8f0")} />
                       <PolarAngleAxis dataKey="level" tick={{ fill: isGeneratingPDF ? '#64748b' : (isDark ? '#94a3b8' : '#64748b'), fontSize: 12, fontWeight: 700 }} />
@@ -788,6 +819,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     return (
                        <div key={lvl} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/5 rounded p-2 text-center print:border-slate-300 relative group">
                           <div className="text-slate-900 dark:text-white font-bold text-xs mb-0.5">{lvl}</div>
+                          <div className={`text-base font-bold leading-none mb-0.5 ${status.textClass}`}>
+                             {score}%
+                          </div>
                           <div className={`text-[10px] font-medium leading-tight mb-1 ${status.textClass}`}>
                              {status.label}
                           </div>
@@ -1011,7 +1045,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
          <div className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-6 rounded-2xl border border-slate-300 dark:border-white/10 mb-4">
             <div className="mb-6 md:mb-0">
                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Save Your Report</h3>
-               <p className="text-sm text-slate-600 dark:text-slate-400">Download a PDF copy or email this self-assessment to yourself.</p>
+               <p className="text-sm text-slate-600 dark:text-slate-400">Download a PDF copy of this self-assessment, or save your results to your account.</p>
             </div>
             <div className="flex space-x-4">
                {/* Email Button */}
@@ -1020,7 +1054,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                   className="flex items-center px-6 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white rounded-lg transition-colors text-sm font-bold border border-slate-200 dark:border-slate-700 shadow-sm"
                >
                   <Mail className="w-5 h-5 mr-2" />
-                  Email Report
+                  Save Results
                </button>
 
                <button
@@ -1055,9 +1089,9 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                     <X className="w-5 h-5" />
                 </button>
                 
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Email Your Analysis</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Save Your Analysis</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    Enter your email to receive a secure link to this report and your 90-day action plan.
+                    Leave your email so we can keep your results on file and reach out about your pathway. To keep a copy now, use Download PDF.
                 </p>
 
                 {emailSent ? (
@@ -1065,15 +1099,15 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                         <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-3">
                             <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
-                        <h4 className="text-lg font-bold text-slate-900 dark:text-white">Sent!</h4>
-                        <p className="text-sm text-slate-500">Check your inbox shortly.</p>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white">Saved!</h4>
+                        <p className="text-sm text-slate-500">Your results are on file. Use Download PDF to keep a copy.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleEmailSubmit} className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
-                            <input 
-                                type="email" 
+                            <input
+                                type="email"
                                 required
                                 placeholder="name@example.com"
                                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
@@ -1081,7 +1115,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
-                        <button 
+                        <button
                             type="submit"
                             disabled={isEmailSending}
                             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all flex items-center justify-center"
@@ -1089,7 +1123,7 @@ const AnalysisResultView: React.FC<Props> = ({ result, profile, onReset, isDark 
                             {isEmailSending ? (
                                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                             ) : (
-                                "Send Report"
+                                "Save My Results"
                             )}
                         </button>
                     </form>
