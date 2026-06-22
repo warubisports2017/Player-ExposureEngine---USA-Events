@@ -13,8 +13,10 @@ AI-powered visibility calculator for elite youth soccer players targeting US col
 
 ## Vercel
 - App: exposureengine
-- URL: https://exposure-engine.vercel.app
+- Prod URL: https://app.warubi-sports.com (canonical, custom domain)
+- Default vercel domain: https://exposure-engine-olive.vercel.app (the bare `exposure-engine.vercel.app` is a DIFFERENT Next.js app - not this repo)
 - Project ID: prj_FcZ0vQHYmOPcphy4knv8Peocq0nI
+- Deploy: `vercel --prod` (CLI). main is review-protected (PROD-SAFE hook blocks direct push) - land changes via PR.
 
 ## Stack
 - React 19 + Vite 6 + TypeScript
@@ -34,9 +36,11 @@ AI-powered visibility calculator for elite youth soccer players targeting US col
 - `types.ts` — All TypeScript interfaces
 - `constants.ts` — Leagues, positions, levels, athletic ratings
 
-## Key Tables
-- `website_leads` — Player submissions + analysis results (upsert by email)
-- `profiles` — User profiles (legacy/future)
+## Key Tables / cross-project writes (verified 2026-06-21)
+- `website_leads` (this project, jeniqwziqenuplvlnely) — Player submissions. Email present -> `upsert_website_lead` RPC + `sync-lead-to-brevo`. No email -> plain insert, no Brevo. Carries `referral_source` from `?ref=`.
+- `profiles` — legacy/future.
+- **Feedback widget** writes to `feedback` in **Warubi Core wwomwawpxmkrykybpqok** (api/feedback.ts uses AUSA_URL via `submit_external_feedback` RPC). NB: this is the SAME table the session-brief reads - test feedback shows up there.
+- **Scout referral** (`?ref=<scout uuid>`) inserts `scout_prospects` in **ITP project umblyhwumtadlvgccdwg** (SCOUT_SUPABASE_URL, service role, inline in api/analyze.ts). `scout_id` is a NOT NULL uuid - a non-uuid ref is silently skipped (safe by design).
 
 ## Architecture Notes
 - **Deterministic scoring**: Visibility score floors are hardcoded by league tier/gender in `api/analyze.ts` — prevents LLM underscoring
