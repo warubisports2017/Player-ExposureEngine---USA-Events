@@ -1186,6 +1186,7 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                 <Label>Coaches Emailed</Label>
                 <input
                   type="number"
+                  min="0"
                   className={`${inputClass} font-mono`}
                   value={isNaN(profile.coachesContacted) ? 0 : profile.coachesContacted}
                   onChange={(e) => handleInputChange('coachesContacted', parseInt(e.target.value))}
@@ -1195,6 +1196,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
                 <Label>Personal Replies</Label>
                 <input
                   type="number"
+                  min="0"
+                  max={profile.coachesContacted}
                   className={`${inputClass} font-mono`}
                   value={isNaN(profile.responsesReceived) ? 0 : profile.responsesReceived}
                   onChange={(e) => handleInputChange('responsesReceived', parseInt(e.target.value))}
@@ -1220,6 +1223,8 @@ const PlayerInputForm: React.FC<Props> = ({ onSubmit, isLoading }) => {
 
                 <input
                   type="number"
+                  min="0"
+                  max={profile.responsesReceived}
                   className={`${inputClass} font-mono border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-900/10 dark:border-emerald-500/30 focus:border-emerald-500`}
                   value={isNaN(profile.offersReceived) ? 0 : profile.offersReceived}
                   onChange={(e) => handleInputChange('offersReceived', parseInt(e.target.value))}

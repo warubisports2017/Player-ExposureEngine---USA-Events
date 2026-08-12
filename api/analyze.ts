@@ -411,20 +411,20 @@ function humanizeLevel(token: any): any {
   return typeof token === 'string' && ENUM_LABELS[token] ? ENUM_LABELS[token] : token;
 }
 
-// Returns a DISPLAY-ONLY deep copy of the profile with the competitive/experience
-// enum tokens humanized, so the model never sees raw underscore tokens to echo.
-// The original profile object is never mutated.
-function humanizeProfileForPrompt(profile: any): any {
+// Returns a deep copy with display labels added beside the raw enum values. The
+// scoring instructions require the raw tokens, while labels give the model clean
+// language for player-facing copy. The original profile object is never mutated.
+export function humanizeProfileForPrompt(profile: any): any {
   const copy = JSON.parse(JSON.stringify(profile));
   if (Array.isArray(copy.experienceLevel)) {
-    copy.experienceLevel = copy.experienceLevel.map(humanizeLevel);
+    copy.experienceLevelLabels = copy.experienceLevel.map(humanizeLevel);
   }
   if (Array.isArray(copy.seasons)) {
     copy.seasons = copy.seasons.map((s: any) => {
       if (!s || typeof s !== 'object') return s;
       const next = { ...s };
-      if (next.competitiveLevel) next.competitiveLevel = humanizeLevel(next.competitiveLevel);
-      if (Array.isArray(next.league)) next.league = next.league.map(humanizeLevel);
+      if (next.competitiveLevel) next.competitiveLevelLabel = humanizeLevel(next.competitiveLevel);
+      if (Array.isArray(next.league)) next.leagueLabels = next.league.map(humanizeLevel);
       return next;
     });
   }
@@ -505,24 +505,79 @@ function isRateLimited(ip: string): boolean {
 }
 
 // Cleanup stale entries periodically (prevent memory leak)
-setInterval(() => {
+const rateLimitCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimitMap) {
     if (now > entry.resetAt) rateLimitMap.delete(ip);
   }
 }, 10 * 60 * 1000); // every 10 min
+rateLimitCleanupTimer.unref?.();
 
 // --- Input Validation ---
-function validateProfile(profile: any): string | null {
+const VALID_POSITIONS = new Set(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST']);
+const VALID_COMPETITIVE_LEVELS = new Set([
+  'MLS_NEXT', 'ECNL_GA', 'ECNL_RL_USYS_USL', 'NPL_Regional', 'High_School',
+  'Local_Recreational', 'Professional', 'Semi_Professional', 'Amateur', 'Recreational',
+]);
+const VALID_LEGACY_LEVELS = new Set([
+  'MLS_NEXT', 'ECNL', 'Girls_Academy', 'USYS_National_League', 'ECNL_RL',
+  'High_School', 'Elite_Local', 'Other',
+]);
+const VALID_VIDEO_TYPES = new Set(['None', 'Raw_Game_Footage', 'Edited_Highlight_Reel']);
+
+export function validateProfile(profile: any): string | null {
   if (!profile || typeof profile !== 'object') return 'Invalid profile data';
-  if (!profile.firstName || typeof profile.firstName !== 'string' || profile.firstName.length > 100)
+  if (!profile.firstName || typeof profile.firstName !== 'string' || !profile.firstName.trim() || profile.firstName.length > 100)
     return 'Invalid first name';
-  if (!profile.lastName || typeof profile.lastName !== 'string' || profile.lastName.length > 100)
+  if (!profile.lastName || typeof profile.lastName !== 'string' || !profile.lastName.trim() || profile.lastName.length > 100)
     return 'Invalid last name';
+  if (profile.email != null && profile.email !== '' &&
+      (typeof profile.email !== 'string' || profile.email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim())))
+    return 'Invalid email';
   if (!['Male', 'Female'].includes(profile.gender)) return 'Invalid gender';
-  if (!profile.position || typeof profile.position !== 'string') return 'Invalid position';
+  if (!VALID_POSITIONS.has(profile.position)) return 'Invalid position';
   if (typeof profile.gradYear !== 'number' || profile.gradYear < 2020 || profile.gradYear > 2035)
     return 'Invalid graduation year';
+  if (!VALID_VIDEO_TYPES.has(profile.videoType)) return 'Invalid video type';
+
+  const dobMatch = typeof profile.dateOfBirth === 'string'
+    ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(profile.dateOfBirth)
+    : null;
+  if (!dobMatch) return 'Invalid date of birth';
+  const [, yearText, monthText, dayText] = dobMatch;
+  const year = Number(yearText), month = Number(monthText), day = Number(dayText);
+  const dob = new Date(Date.UTC(year, month - 1, day, 12));
+  if (dob.getUTCFullYear() !== year || dob.getUTCMonth() !== month - 1 || dob.getUTCDate() !== day || dob > new Date())
+    return 'Invalid date of birth';
+
+  const gpa = profile.academics?.gpa;
+  if (typeof gpa !== 'number' || !Number.isFinite(gpa) || gpa < 0 || gpa > 4) return 'Invalid GPA';
+
+  if (!Array.isArray(profile.seasons) || profile.seasons.length === 0) return 'At least one season is required';
+  for (const season of profile.seasons) {
+    if (!season || typeof season !== 'object') return 'Invalid season data';
+    const hasCurrentLevel = VALID_COMPETITIVE_LEVELS.has(season.competitiveLevel);
+    const hasLegacyLevel = Array.isArray(season.league) && season.league.length > 0 &&
+      season.league.every((level: unknown) => typeof level === 'string' && VALID_LEGACY_LEVELS.has(level));
+    if (!hasCurrentLevel && !hasLegacyLevel) return 'Invalid competitive level';
+    for (const value of [season.gamesPlayed, season.goals, season.assists]) {
+      if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'Invalid season statistics';
+    }
+    if (season.cleanSheets != null &&
+        (typeof season.cleanSheets !== 'number' || !Number.isFinite(season.cleanSheets) || season.cleanSheets < 0))
+      return 'Invalid season statistics';
+    const minutes = season.minutesPlayedPercent;
+    if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes < 0 || minutes > 100)
+      return 'Invalid minutes played';
+  }
+
+  const contacts = profile.coachesContacted;
+  const responses = profile.responsesReceived;
+  const offers = profile.offersReceived;
+  if (![contacts, responses, offers].every(value => typeof value === 'number' && Number.isInteger(value) && value >= 0))
+    return 'Invalid recruiting funnel counts';
+  if (responses > contacts) return 'Replies cannot exceed coaches contacted';
+  if (offers > responses) return 'Offers cannot exceed replies';
 
   // Check string field lengths to prevent token abuse
   const jsonSize = JSON.stringify(profile).length;
@@ -697,9 +752,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Prevent Gemini from inflating D1 beyond tier-realistic maximums
       const TIER_D1_MAX: Record<string, number> = {
         High_School: 30, Local_Recreational: 30, Recreational: 30,
-        NPL_Regional: 50,
-        ECNL_RL_USYS_USL: 65, Amateur: 65,
-        ECNL_GA: 80, Semi_Professional: 80,
+        NPL_Regional: 50, Elite_Local: 50, Other: 50,
+        ECNL_RL_USYS_USL: 65, ECNL_RL: 65, USYS_National_League: 65, Amateur: 65,
+        ECNL_GA: 80, ECNL: 80, Girls_Academy: 80, Semi_Professional: 80,
         MLS_NEXT: 92,
         Professional: 100,
       };
@@ -708,8 +763,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const latestSeason = profile.seasons.reduce((a: any, b: any) =>
           (b.year || 0) > (a.year || 0) ? b : a
         );
-        const compLevel = latestSeason?.competitiveLevel;
-        const maxD1 = TIER_D1_MAX[compLevel] ?? 100;
+        const currentMax = TIER_D1_MAX[latestSeason?.competitiveLevel];
+        const legacyMax = Array.isArray(latestSeason?.league)
+          ? Math.max(...latestSeason.league.map((level: string) => TIER_D1_MAX[level] ?? 30))
+          : undefined;
+        const maxD1 = currentMax ?? legacyMax ?? 30;
+        const compLevel = latestSeason?.competitiveLevel || latestSeason?.league?.join(',') || 'unknown';
 
         const d1Entry = result.visibilityScores.find((s: any) => s.level === 'D1');
         if (d1Entry && d1Entry.visibilityPercent > maxD1) {
@@ -747,7 +806,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const RATING_TO_INT: Record<string, number> = {
-  Elite: 95, 'Top 10%': 85, 'Above Average': 70, Average: 50, 'Below Average': 30,
+  Elite: 95, Top_10_Percent: 85, Above_Average: 70, Average: 50, Below_Average: 30,
 };
 
 async function createScoutProspect(profile: any, result: any): Promise<void> {
@@ -810,7 +869,7 @@ async function createScoutProspect(profile: any, result: any): Promise<void> {
     dominant_foot: profile.dominantFoot || null,
     nationality: Array.isArray(profile.citizenship) ? profile.citizenship.join(', ') : profile.citizenship || null,
     club: latestSeason?.teamName || null,
-    team_level: latestSeason?.league?.[0] || null,
+    team_level: latestSeason?.competitiveLevel || latestSeason?.league?.[0] || null,
     gpa: profile.academics?.gpa ?? null,
     grad_year: profile.gradYear ?? null,
     sat_act: profile.academics?.testScore || null,

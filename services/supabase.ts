@@ -5,7 +5,6 @@ export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY,
   {
     auth: {
-      lockAcquireTimeout: 1000,
       lock: async (name: string, acquireTimeout: number, fn: () => Promise<any>) => await fn()
     }
   }

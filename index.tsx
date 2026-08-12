@@ -18,12 +18,11 @@ posthog.init('phc_ye5SfajjJFkrj8C8cExzZG34ft4Xha8LjNiHc6RYaavL', buildPostHogOpt
   capture_pageview: true,
   capture_pageleave: true,
   session_recording: {
-    maskAllInputs: false,
+    // This public athlete form collects names, email, birth date, GPA, and
+    // playing history. Replays must never capture any entered value.
+    maskAllInputs: true,
     maskInputFn: (text: string, element?: HTMLElement) => {
-      if ((element as HTMLInputElement | undefined)?.type === 'password') {
-        return '*'.repeat(text.length);
-      }
-      return text;
+      return '*'.repeat(text.length);
     },
   },
 }));

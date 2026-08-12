@@ -12,10 +12,10 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 // Map self-assessment labels to 1-99 scale
 const RATING_MAP: Record<string, number> = {
   Elite: 95,
-  'Top 10%': 85,
-  'Above Average': 70,
+  Top_10_Percent: 85,
+  Above_Average: 70,
   Average: 50,
-  'Below Average': 30,
+  Below_Average: 30,
 };
 
 function ratingToInt(val: string | undefined): number | null {

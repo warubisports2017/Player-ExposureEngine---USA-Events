@@ -12,7 +12,7 @@ const LEVEL_TIER: Record<string, number> = {
   // Named NA Youth
   MLS_NEXT: 5, ECNL_GA: 4, ECNL_RL_USYS_USL: 3, NPL_Regional: 2, High_School: 1, Local_Recreational: 1,
   // Generic
-  Professional: 5, Semi_Professional: 4, Amateur: 3, Recreational: 1,
+  Professional: 6, Semi_Professional: 4, Amateur: 3, Recreational: 1,
   // Legacy values (backward compat)
   ECNL: 4, Girls_Academy: 4, ECNL_RL: 3, USYS_National_League: 3, Elite_Local: 2, Other: 1,
 };
@@ -36,12 +36,12 @@ function computeMarketReadiness(profile: PlayerProfile): number {
   // Offers: 3 offers = 100 (full marks)
   const offerScore = Math.min(offers / 3, 1) * 100;
 
-  return Math.round(
+  return clamp(Math.round(
     videoScore * 0.30 +
     contactScore * 0.25 +
     responseScore * 0.25 +
     offerScore * 0.20
-  );
+  ), 0, 100);
 }
 
 // --- Visibility floor enforcement (prevents LLM from underscoring) ---
@@ -71,14 +71,16 @@ function getVisibilityTier(profile: PlayerProfile): number {
 // Base visibility scores [D1, D2, D3, NAIA, JUCO] — must match api/analyze.ts prompt
 // Cascading rule: D1 <= D2 <= D3 <= NAIA <= JUCO
 const BASE_BOYS: Record<number, number[]> = {
-  5: [55, 80, 82, 85, 90],  // Top Elite (MLS NEXT) / Professional
+  6: [80, 90, 92, 95, 98],  // Professional
+  5: [55, 80, 82, 85, 90],  // Top Elite (MLS NEXT)
   4: [42, 72, 75, 80, 88],  // Elite (ECNL/GA, Semi-Professional)
   3: [15, 60, 65, 70, 80],  // High (ECNL RL/USYS/USL, Amateur)
   2: [8, 35, 55, 60, 70],   // Mid (NPL/Regional)
   1: [5, 20, 40, 45, 60],   // Low (HS/Local/Recreational)
 };
 const BASE_GIRLS: Record<number, number[]> = {
-  5: [60, 85, 87, 90, 95],  // Top Elite / Professional
+  6: [85, 92, 94, 96, 98],  // Professional
+  5: [60, 85, 87, 90, 95],  // Top Elite
   4: [55, 80, 82, 85, 92],  // Elite (ECNL/GA, Semi-Professional)
   3: [20, 68, 73, 78, 88],  // High (Amateur)
   2: [10, 40, 62, 68, 75],  // Mid
@@ -126,26 +128,24 @@ function enforceVisibilityFloors(profile: PlayerProfile, result: AnalysisResult)
   }
 }
 
-// --- Monotonic ordering: JUCO >= NAIA >= D2 (D3/D1 independent) ---
+// --- Monotonic ordering: D1 <= D2 <= D3 <= NAIA <= JUCO ---
 
 function enforceMonotonicOrdering(result: AnalysisResult): void {
-  const get = (level: string) => result.visibilityScores.find(v => v.level === level);
-  const d2 = get('D2'), naia = get('NAIA'), juco = get('JUCO');
-  if (!d2 || !naia || !juco) return;
-
-  // NAIA should be >= D2
-  if (naia.visibilityPercent < d2.visibilityPercent) {
-    naia.visibilityPercent = d2.visibilityPercent;
-  }
-  // JUCO should be >= NAIA
-  if (juco.visibilityPercent < naia.visibilityPercent) {
-    juco.visibilityPercent = naia.visibilityPercent;
+  const orderedLevels = ['D1', 'D2', 'D3', 'NAIA', 'JUCO'];
+  for (let index = 1; index < orderedLevels.length; index++) {
+    const previous = result.visibilityScores.find(v => v.level === orderedLevels[index - 1]);
+    const current = result.visibilityScores.find(v => v.level === orderedLevels[index]);
+    if (previous && current && current.visibilityPercent < previous.visibilityPercent) {
+      current.visibilityPercent = previous.visibilityPercent;
+    }
   }
 }
 
 // --- Verified readiness (separate from visibility) ---
 
 const TIER_MULTIPLIER: Record<number, number> = {
+  6: 1.0,   // Professional: face value
+  5: 1.0,   // Top Elite: face value
   4: 1.0,   // Elite: face value
   3: 0.75,  // High: unverified at top level
   2: 0.6,   // Mid
@@ -153,6 +153,8 @@ const TIER_MULTIPLIER: Record<number, number> = {
 };
 
 const TIER_LABEL: Record<number, string> = {
+  6: '',
+  5: '',
   4: '',
   3: 'competitive but one tier below national showcase leagues',
   2: 'a regional league — limited national exposure',
@@ -282,20 +284,26 @@ function computeEstimatedCaliber(profile: PlayerProfile): EstimatedCaliber {
 
 function validateAndNormalize(raw: any): AnalysisResult {
   // Ensure visibilityScores is an array with all 5 levels
-  let vis = Array.isArray(raw.visibilityScores) ? raw.visibilityScores : [];
+  const rawVis = Array.isArray(raw.visibilityScores) ? raw.visibilityScores : [];
 
-  // Normalize level names and clamp percentages
-  vis = vis.map((v: any) => ({
-    ...v,
-    level: (v.level || "").replace(/NCAA\s*/i, "").trim(),
-    visibilityPercent: clamp(v.visibilityPercent || 0, 0, 100),
-  }));
+  // Normalize, deduplicate, and order level names while clamping percentages.
+  // Response schemas constrain shape but do not guarantee semantic uniqueness.
+  const byLevel = new Map<string, any>();
+  for (const value of rawVis) {
+    const level = String(value?.level || '').replace(/NCAA\s*/i, '').trim();
+    if (!LEVELS.includes(level as typeof LEVELS[number]) || byLevel.has(level)) continue;
+    const numericScore = Number(value?.visibilityPercent);
+    byLevel.set(level, {
+      ...value,
+      level,
+      visibilityPercent: clamp(Number.isFinite(numericScore) ? numericScore : 0, 0, 100),
+    });
+  }
 
   // Ensure all 5 levels exist
+  const vis = [];
   for (const level of LEVELS) {
-    if (!vis.find((v: any) => v.level === level)) {
-      vis.push({ level, visibilityPercent: 0, notes: "Not evaluated" });
-    }
+    vis.push(byLevel.get(level) || { level, visibilityPercent: 0, notes: 'Not evaluated' });
   }
 
   // Ensure readinessScore is an object with 5 numeric keys
@@ -305,7 +313,8 @@ function validateAndNormalize(raw: any): AnalysisResult {
   }
   rs = rs || {};
   for (const key of ["athletic", "technical", "tactical", "academic", "market"] as const) {
-    rs[key] = clamp(rs[key] || 50, 0, 100);
+    const numericScore = Number(rs[key]);
+    rs[key] = clamp(Number.isFinite(numericScore) ? numericScore : 50, 0, 100);
   }
 
   return {
@@ -353,7 +362,7 @@ export const analyzeExposure = async (profile: PlayerProfile): Promise<AnalysisR
   // Enforce visibility score floors (LLM often underestimates NAIA/JUCO/D3)
   enforceVisibilityFloors(profile, result);
 
-  // Enforce monotonic ordering: JUCO >= NAIA >= D2 (D3 is independent, D1 is independent)
+  // Enforce the documented cascading competency rule across all five levels.
   enforceMonotonicOrdering(result);
 
   // Override market readiness with deterministic computation (not LLM-guessed)
